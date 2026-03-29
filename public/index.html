@@ -779,8 +779,6 @@ select.inp option{background:var(--surface2);}
   </div>
 </div>
 
-</div><!-- end #app -->
-
 <!-- ======= SCREEN: TRENINGI ======= -->
 <div class="screen" id="screen-workouts">
   <div class="top-bar">
@@ -788,7 +786,6 @@ select.inp option{background:var(--surface2);}
     <div style="font-size:11px;color:var(--muted);font-weight:500;">Moje treningi</div>
   </div>
 
-  <!-- Action buttons — always visible below header -->
   <div style="padding:14px 14px 0;display:flex;gap:8px;">
     <button class="btn btn-primary" onclick="goTo('new-workout')" style="flex:2;">+ Dodaj trening</button>
     <button class="btn btn-ghost" onclick="openImportPanel()" style="flex:1;font-size:12px;padding:12px 8px;">📊 Excel</button>
@@ -799,39 +796,34 @@ select.inp option{background:var(--surface2);}
 
 <!-- ======= SCREEN: NOWY TRENING ======= -->
 <div class="screen" id="screen-new-workout">
-  <!-- Header -->
   <div class="top-bar" style="flex-direction:column;align-items:stretch;gap:10px;">
     <div style="display:flex;align-items:center;gap:10px;">
       <button onclick="goTo('workouts')" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:2px 6px 2px 0;line-height:1;">‹</button>
       <input id="newWktNameInput" class="inp" placeholder="Nazwa treningu (np. Push Day A)" style="flex:1;font-size:15px;font-weight:600;">
       <button onclick="saveNewWorkoutAndStart()" class="btn btn-primary" style="flex-shrink:0;padding:10px 16px;font-size:13px;width:auto;">Zacznij →</button>
     </div>
-    <!-- Search -->
     <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="newWktSearch" type="text" placeholder="Szukaj ćwiczenia…" style="background:none;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;flex:1;" oninput="renderNewWktExList()">
     </div>
-    <!-- Category tabs -->
     <div id="newWktCatTabs" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;"></div>
   </div>
 
-  <!-- Selected exercises summary bar -->
   <div id="selectedSummaryBar" style="display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;">
     <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Wybrane ćwiczenia</div>
     <div id="selectedChips" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;"></div>
   </div>
 
-  <!-- Exercise list -->
-  <div id="newWktExList" style="overflow-y:auto;padding-bottom:80px;"></div>
+  <div id="newWktExList" style="padding-bottom:90px;"></div>
 
-  <!-- Custom exercise button -->
-  <div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:0 14px;">
-    <button class="btn btn-ghost" onclick="addCustomExercise()" style="font-size:13px;padding:12px;display:flex;align-items:center;justify-content:center;gap:6px;">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      Dodaj własne ćwiczenie
+  <div style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:10px 14px;background:var(--bg);border-top:1px solid var(--border);">
+    <button class="btn btn-ghost" onclick="addCustomExercise()" style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      + Dodaj własne ćwiczenie
     </button>
   </div>
 </div>
+
+</div><!-- end #app -->
 
 <!-- BOTTOM NAV -->
 <nav class="nav">
