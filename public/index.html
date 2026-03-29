@@ -465,10 +465,7 @@ select.inp option{background:var(--surface2);}
 }
 @keyframes spin{to{transform:rotate(360deg);}}
 </style>
-  <script>
-    // Groq API key — zostanie wstrzyknięty przez serwer lub ustawiony tutaj
-    window._GROQ_KEY = '';
-  </script>
+
 </head>
 <body>
 
@@ -1825,30 +1822,21 @@ async function sendChat(){
   document.getElementById('chatWrap').scrollTop=9999;
 }
 
-// ===================== GROQ API (darmowe) =====================
-const GROQ_KEY = window._GROQ_KEY || '';
-
+// ===================== AI — przez backend =====================
 async function callAI(userMsg, systemPrompt){
-  const apiKey = GROQ_KEY;
-  if(!apiKey) throw new Error('Brak klucza Groq API');
-
-  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const r = await fetch('/api/ai', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + apiKey,
-    },
+    headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 512,
       messages: [
         {role: 'system', content: systemPrompt},
         {role: 'user', content: userMsg}
       ]
     })
   });
+  if(!r.ok) throw new Error('Błąd serwera: ' + r.status);
   const d = await r.json();
-  if(d.error) throw new Error(d.error.message || 'Błąd Groq API');
+  if(d.error) throw new Error(typeof d.error === 'string' ? d.error : (d.error.message || 'Błąd AI'));
   return d.choices?.[0]?.message?.content || '';
 }
 
