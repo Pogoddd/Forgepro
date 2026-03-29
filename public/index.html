@@ -6,6 +6,8 @@
 <title>ForgePro</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <style>
 :root {
   --bg: #0c0c0f;
@@ -406,12 +408,12 @@ select.inp option{background:var(--surface2);}
 
 /* IMPORT EXCEL */
 .import-drop{
-  border:2px dashed var(--border);border-radius:var(--radius);
-  padding:36px 20px;text-align:center;cursor:pointer;
-  transition:all .2s;margin:0 16px;
+  border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;cursor:pointer;
+  transition:all .2s;
+  background:var(--surface);
 }
 .import-drop:hover,.import-drop.drag{border-color:var(--orange);background:var(--orange-dim);}
-.import-drop .drop-ico{font-size:36px;margin-bottom:10px;}
 .import-drop p{font-size:14px;color:var(--muted);line-height:1.6;}
 .import-drop strong{color:var(--text);}
 
@@ -541,6 +543,7 @@ select.inp option{background:var(--surface2);}
 
 <!-- Hidden file input -->
 <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+<input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handlePdfSelect(event)">
 
 <!-- ===== PANEL: Import Excel ===== -->
 <div class="panel" id="importPanel">
@@ -1873,39 +1876,147 @@ function updateImportStep(n){
 
 function showImportUpload(){
   document.getElementById('importContent').innerHTML = `
-    <div style="padding:0 16px;">
-      <div class="import-drop" id="dropZone"
+    <div style="padding:0 16px 24px;">
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Wybierz typ pliku</div>
+
+      <!-- Excel option -->
+      <div class="import-drop" style="margin-bottom:10px;"
         onclick="document.getElementById('xlsxInput').click()"
         ondragover="event.preventDefault();this.classList.add('drag')"
         ondragleave="this.classList.remove('drag')"
-        ondrop="handleDrop(event)">
-        <div class="drop-ico">📊</div>
-        <p><strong>Naciśnij lub przeciągnij plik Excel</strong><br>Obsługuje .xlsx, .xls, .csv</p>
+        ondrop="handleDrop(event,'excel')">
+        <div style="display:flex;align-items:center;gap:14px;text-align:left;">
+          <div style="font-size:36px;flex-shrink:0;">📊</div>
+          <div>
+            <div style="font-weight:700;font-size:15px;margin-bottom:3px;">Excel / CSV</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">Plan od trenera w tabeli<br><span style="color:var(--dim);">.xlsx .xls .csv</span></div>
+          </div>
+          <div style="margin-left:auto;color:var(--orange);font-size:20px;">›</div>
+        </div>
       </div>
-      <div style="margin-top:16px;padding:14px;background:var(--orange-dim);border:1px solid var(--orange-mid);border-radius:12px;">
-        <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--orange);text-transform:uppercase;margin-bottom:6px;">💡 Jak to działa?</div>
-        <p style="font-size:13px;line-height:1.6;color:var(--text);">
-          AI automatycznie odczyta plan od trenera — niezależnie od formatu tabeli. Wykryje dni, ćwiczenia, serie i powtórzenia i doda je do Twojej aplikacji.
-        </p>
+
+      <!-- PDF option -->
+      <div class="import-drop"
+        onclick="document.getElementById('pdfInput').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event,'pdf')">
+        <div style="display:flex;align-items:center;gap:14px;text-align:left;">
+          <div style="font-size:36px;flex-shrink:0;">📄</div>
+          <div>
+            <div style="font-weight:700;font-size:15px;margin-bottom:3px;">PDF</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">Plan treningowy w PDF<br><span style="color:var(--dim);">AI odczyta i wgra automatycznie</span></div>
+          </div>
+          <div style="margin-left:auto;color:var(--orange);font-size:20px;">›</div>
+        </div>
       </div>
-      <div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.6;padding:0 4px;">
-        Przykłady które działają: "Dzień A / B / C", "Poniedziałek / Środa", "Push / Pull / Legs", kolumny z seriami i powtórzeniami w dowolnym formacie.
+
+      <div style="margin-top:14px;padding:12px 14px;background:var(--orange-dim);border:1px solid var(--orange-mid);border-radius:10px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--orange);text-transform:uppercase;margin-bottom:5px;">✦ Jak to działa?</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.6;">AI automatycznie odczyta plan — wykryje dni, ćwiczenia, serie i powtórzenia niezależnie od formatu.</div>
       </div>
     </div>
   `;
 }
 
-function handleDrop(e){
+function handleDrop(e, type){
   e.preventDefault();
-  document.getElementById('dropZone').classList.remove('drag');
+  e.currentTarget.classList.remove('drag');
   const file = e.dataTransfer.files[0];
-  if(file) processExcelFile(file);
+  if(!file) return;
+  if(type==='pdf') processPdfFile(file);
+  else processExcelFile(file);
 }
 
 function handleFileSelect(e){
   const file = e.target.files[0];
   if(file) processExcelFile(file);
   e.target.value = '';
+}
+
+function handlePdfSelect(e){
+  const file = e.target.files[0];
+  if(file) processPdfFile(file);
+  e.target.value = '';
+}
+
+// ===== PDF PROCESSING =====
+async function processPdfFile(file){
+  updateImportStep(2);
+  document.getElementById('importContent').innerHTML = `
+    <div class="ai-parsing">
+      <div class="ai-spinner"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Czytam PDF…</div>
+      <div style="font-size:13px;color:var(--muted);">Wyciągam tekst z dokumentu</div>
+    </div>
+  `;
+
+  try {
+    // Read PDF as ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+
+    let fullText = '';
+    const maxPages = Math.min(pdf.numPages, 10); // max 10 stron
+
+    for(let i = 1; i <= maxPages; i++){
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+      fullText += `\n--- Strona ${i} ---\n${pageText}`;
+    }
+
+    if(!fullText.trim() || fullText.trim().length < 30){
+      showImportError('PDF nie zawiera tekstu lub jest zeskanowany jako obraz.<br><br><small style="color:var(--dim);">Spróbuj z plikiem Excel zamiast PDF.</small>');
+      return;
+    }
+
+    // Send to AI
+    document.getElementById('importContent').innerHTML = `
+      <div class="ai-parsing">
+        <div class="ai-spinner"></div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">AI analizuje plan…</div>
+        <div style="font-size:13px;color:var(--muted);">Wykrywam dni, ćwiczenia, serie i powtórzenia</div>
+        <div style="margin-top:8px;font-size:11px;color:var(--dim);max-width:280px;text-align:center;line-height:1.5;">${pdf.numPages} stron · ${Math.round(fullText.length/1000)}KB tekstu</div>
+      </div>
+    `;
+
+    const truncated = fullText.slice(0, 8000);
+
+    let aiResult;
+    try {
+      aiResult = await Promise.race([
+        callAI(truncated, AI_PARSE_PROMPT),
+        new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 30000))
+      ]);
+    } catch(err) {
+      showImportError('AI nie odpowiedziało na czas.<br><br><small style="color:var(--dim);">Sprawdź połączenie i spróbuj ponownie.</small>');
+      return;
+    }
+
+    let plan;
+    try {
+      const clean = aiResult.replace(/```json|```/g,'').trim();
+      const jsonMatch = clean.match(/\{[\s\S]*\}/);
+      if(!jsonMatch) throw new Error('brak JSON');
+      plan = JSON.parse(jsonMatch[0]);
+    } catch(e) {
+      showImportError('AI odczytało PDF ale nie mogło rozpoznać struktury planu treningowego.<br><br><small style="color:var(--dim);">Upewnij się że plik zawiera plan z ćwiczeniami, seriami i powtórzeniami.</small>');
+      return;
+    }
+
+    if(!plan.days || !plan.days.length){
+      showImportError('Nie znaleziono dni treningowych w PDF.<br><br><small style="color:var(--dim);">Spróbuj z innym plikiem lub użyj Excela.</small>');
+      return;
+    }
+
+    parsedPlan = plan;
+    showImportPreview(plan);
+
+  } catch(err) {
+    showImportError('Błąd odczytu PDF: ' + err.message);
+  }
 }
 
 function processExcelFile(file){
@@ -2169,9 +2280,18 @@ function startFromImportedPlan(planId, encodedDayName){
 }
 
 // ===================== DIRECT EXCEL PARSER =====================
-const AI_PARSE_PROMPT = `Jesteś parserem planów treningowych. Odpowiedz TYLKO czystym JSON bez markdown:
-{"planName":"nazwa","days":[{"dayName":"nazwa dnia","exercises":[{"name":"ćwiczenie","sets":3,"reps":"8-10","rest":"120s","notes":""}]}]}
-Zasady: szukaj dni treningowych (PUSH/PULL/FBW/ARMS/PONIEDZIAŁEK itp.), ignoruj opisy i poradniki. sets=liczba całkowita. Daty w formacie d-m to zakresy powtórzeń (8-6 → "6-8").`;
+const AI_PARSE_PROMPT = `Jesteś parserem planów treningowych. Otrzymujesz tekst z pliku (Excel CSV lub PDF) od polskiego trenera personalnego.
+Odpowiedz TYLKO czystym JSON bez markdown, backticks ani żadnego dodatkowego tekstu:
+{"planName":"nazwa planu","days":[{"dayName":"nazwa dnia","exercises":[{"name":"ćwiczenie","sets":3,"reps":"8-10","rest":"120s","notes":""}]}]}
+Zasady:
+- Szukaj dni treningowych: PUSH/PULL/FBW/ARMS/LEGS/PONIEDZIAŁEK/WTOREK/ŚRODA/CZWARTEK/PIĄTEK/SOBOTA/NIEDZIELA/DZIEŃ A/B/C/D
+- Ignoruj opisy, poradniki, wstępy, informacje o diecie, regeneracji
+- sets = liczba całkowita (np. 3, 4)
+- reps = zakres lub liczba (np. "8-10", "12", "10 na rękę")
+- Daty w formacie d-m to zakresy powtórzeń (np. "8-6" = "6-8 powt.")
+- Ćwiczenia z A/B przy numerze (5A, 5B) to superserie — dodaj notes: "Superseria"
+- Jeśli brak podziału na dni — stwórz jeden dzień "Trening A"
+- Nie tłumacz nazw ćwiczeń, zostaw oryginalne`;
 
 function directParsePlan(wb){
   try {
