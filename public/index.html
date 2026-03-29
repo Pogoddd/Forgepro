@@ -116,8 +116,8 @@ body{
 /* BUTTONS */
 .btn{
   display:block;width:100%;padding:15px;border-radius:var(--radius);
-  font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
-  letter-spacing:.04em;text-transform:uppercase;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;
+  letter-spacing:.01em;border:none;cursor:pointer;
   transition:transform .12s,opacity .12s;
 }
 .btn:active{transform:scale(.97);opacity:.9;}
@@ -222,7 +222,7 @@ select.inp option{background:var(--surface2);}
 .cat-tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 0;scrollbar-width:none;}
 .cat-tab{
   flex-shrink:0;padding:6px 14px;border-radius:20px;
-  font-size:12px;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;
   background:var(--surface);border:1px solid var(--border);color:var(--muted);
   transition:all .15s;
 }
@@ -788,18 +788,13 @@ select.inp option{background:var(--surface2);}
     <div style="font-size:11px;color:var(--muted);font-weight:500;">Moje treningi</div>
   </div>
 
-  <div id="workoutsTemplateList" style="padding:12px 14px 100px;"></div>
-
-  <!-- Import Excel shortcut -->
-  <div style="position:fixed;bottom:84px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:0 14px 10px;background:linear-gradient(transparent,var(--bg) 40%);">
-    <button class="btn btn-primary" onclick="goTo('new-workout')" style="margin-bottom:8px;">
-      + Dodaj trening
-    </button>
-    <button class="btn btn-ghost" onclick="openImportPanel()" style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:11px;">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      Importuj plan z Excela (od trenera)
-    </button>
+  <!-- Action buttons — always visible below header -->
+  <div style="padding:14px 14px 0;display:flex;gap:8px;">
+    <button class="btn btn-primary" onclick="goTo('new-workout')" style="flex:2;">+ Dodaj trening</button>
+    <button class="btn btn-ghost" onclick="openImportPanel()" style="flex:1;font-size:12px;padding:12px 8px;">📊 Excel</button>
   </div>
+
+  <div id="workoutsTemplateList" style="padding:12px 14px 90px;"></div>
 </div>
 
 <!-- ======= SCREEN: NOWY TRENING ======= -->
