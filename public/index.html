@@ -1941,61 +1941,81 @@ async function processPdfFile(file){
   `;
 
   try {
-    // Read PDF as ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
 
-    let fullText = '';
-    const maxPages = Math.min(pdf.numPages, 10); // max 10 stron
+    // Extract text page by page, preserving line structure
+    let allLines = [];
+    const maxPages = Math.min(pdf.numPages, 8);
 
     for(let i = 1; i <= maxPages; i++){
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(item => item.str).join(' ');
-      fullText += `\n--- Strona ${i} ---\n${pageText}`;
+
+      // Group items by Y position to reconstruct lines
+      const byY = {};
+      for(const item of textContent.items){
+        if(!item.str.trim()) continue;
+        const y = Math.round(item.transform[5]);
+        if(!byY[y]) byY[y] = [];
+        byY[y].push({x: item.transform[4], text: item.str});
+      }
+
+      // Sort lines top→bottom, items left→right
+      const sortedY = Object.keys(byY).map(Number).sort((a,b)=>b-a);
+      for(const y of sortedY){
+        const lineItems = byY[y].sort((a,b)=>a.x-b.x);
+        const lineText = lineItems.map(i=>i.text).join(' ').trim();
+        if(lineText) allLines.push(lineText);
+      }
+      allLines.push(''); // blank between pages
     }
 
-    if(!fullText.trim() || fullText.trim().length < 30){
-      showImportError('PDF nie zawiera tekstu lub jest zeskanowany jako obraz.<br><br><small style="color:var(--dim);">Spróbuj z plikiem Excel zamiast PDF.</small>');
+    const fullText = allLines.join('\n');
+
+    if(!fullText.trim() || fullText.length < 50){
+      showImportError('PDF nie zawiera tekstu lub jest zeskanowany jako obraz.<br><br><small>Spróbuj z plikiem Excel.</small>');
       return;
     }
 
-    // Send to AI
+    // ---- TRY DIRECT PARSER FIRST (fast, no AI) ----
     document.getElementById('importContent').innerHTML = `
       <div class="ai-parsing">
         <div class="ai-spinner"></div>
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">AI analizuje plan…</div>
-        <div style="font-size:13px;color:var(--muted);">Wykrywam dni, ćwiczenia, serie i powtórzenia</div>
-        <div style="margin-top:8px;font-size:11px;color:var(--dim);max-width:280px;text-align:center;line-height:1.5;">${pdf.numPages} stron · ${Math.round(fullText.length/1000)}KB tekstu</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Analizuję plan…</div>
+        <div style="font-size:13px;color:var(--muted);">Rozpoznaję strukturę treningu</div>
       </div>
     `;
 
-    const truncated = fullText.slice(0, 8000);
+    let plan = directParsePdfText(allLines, fullText);
 
-    let aiResult;
-    try {
-      aiResult = await Promise.race([
-        callAI(truncated, AI_PARSE_PROMPT),
-        new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 30000))
-      ]);
-    } catch(err) {
-      showImportError('AI nie odpowiedziało na czas.<br><br><small style="color:var(--dim);">Sprawdź połączenie i spróbuj ponownie.</small>');
-      return;
+    // ---- AI FALLBACK ----
+    if(!plan || !plan.days || !plan.days.length){
+      document.getElementById('importContent').innerHTML = `
+        <div class="ai-parsing">
+          <div class="ai-spinner"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">AI analizuje plan…</div>
+          <div style="font-size:13px;color:var(--muted);">Niestandardowy format — AI go odczyta</div>
+        </div>
+      `;
+
+      try {
+        const truncated = fullText.slice(0, 7000);
+        const aiResult = await Promise.race([
+          callAI(truncated, AI_PARSE_PROMPT),
+          new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 30000))
+        ]);
+        const clean = aiResult.replace(/```json|```/g,'').trim();
+        const jsonMatch = clean.match(/\{[\s\S]*\}/);
+        if(jsonMatch) plan = JSON.parse(jsonMatch[0]);
+      } catch(err) {
+        showImportError('Nie udało się przetworzyć pliku.<br><br><small style="color:var(--dim);">Sprawdź czy klucz AI jest ustawiony w Railway → Variables → GROQ_API_KEY</small>');
+        return;
+      }
     }
 
-    let plan;
-    try {
-      const clean = aiResult.replace(/```json|```/g,'').trim();
-      const jsonMatch = clean.match(/\{[\s\S]*\}/);
-      if(!jsonMatch) throw new Error('brak JSON');
-      plan = JSON.parse(jsonMatch[0]);
-    } catch(e) {
-      showImportError('AI odczytało PDF ale nie mogło rozpoznać struktury planu treningowego.<br><br><small style="color:var(--dim);">Upewnij się że plik zawiera plan z ćwiczeniami, seriami i powtórzeniami.</small>');
-      return;
-    }
-
-    if(!plan.days || !plan.days.length){
-      showImportError('Nie znaleziono dni treningowych w PDF.<br><br><small style="color:var(--dim);">Spróbuj z innym plikiem lub użyj Excela.</small>');
+    if(!plan || !plan.days || !plan.days.length){
+      showImportError('Nie znaleziono planu treningowego w PDF.<br><br><small>Upewnij się że plik zawiera ćwiczenia z seriami i powtórzeniami.</small>');
       return;
     }
 
@@ -2006,6 +2026,188 @@ async function processPdfFile(file){
     showImportError('Błąd odczytu PDF: ' + err.message);
   }
 }
+
+// ===== DIRECT PDF TEXT PARSER =====
+function directParsePdfText(lines, fullText){
+  try {
+    // Day header patterns
+    const DAY_PATTERNS = [
+      /^(GÓRA|DOŁ|DÓŁ|PUSH|PULL|ARMS|LEGS|FULL BODY|FBW|KLATKA|PLECY|NOGI|BARKI)\s*(PONIEDZIAŁEK|WTOREK|ŚRODA|CZWARTEK|PIĄTEK|SOBOTA|NIEDZIELA)?/i,
+      /^(PONIEDZIAŁEK|WTOREK|ŚRODA|CZWARTEK|PIĄTEK|SOBOTA|NIEDZIELA)/i,
+      /^(TRENING|DZIEŃ|DAY)\s*[ABCDE1234]/i,
+      /^(FULL BODY WORKOUT|FBW WORKOUT)/i,
+    ];
+
+    // Stop keywords - these lines end the plan
+    const STOP = ['ROZGRZEWKA','SERIE WSTĘPNE','METODA PROGRESJI','PONIŻEJ ZNAJDZIESZ','DZIĘKUJĘ','WIEM, JEDNAK','OPTYMALNEGO'];
+
+    // Skip keywords - column headers, legal notes, etc.
+    const SKIP = ['LP ','NAZWA ĆWICZENIA','ILOŚĆ SERII','TEMPO','PRZERWA','CIĘŻAR','STRATEGIE ZASTOSOWANE','OPIS METODY','KLIKNIJ W'];
+
+    // Detect plan name from first non-empty line
+    let planName = '4-dniowy plan treningowy';
+    for(const line of lines){
+      const l = line.trim();
+      if(l.length > 5 && l.length < 80 && !SKIP.some(s=>l.toUpperCase().includes(s))){
+        planName = l.replace(/\s+/g,' ').trim();
+        break;
+      }
+    }
+
+    const days = [];
+    let currentDay = null;
+    let stopParsing = false;
+
+    for(let idx = 0; idx < lines.length; idx++){
+      if(stopParsing) break;
+      const raw = lines[idx];
+      const line = raw.trim();
+      const lineUp = line.toUpperCase();
+      if(!line) continue;
+
+      // Stop at guide sections
+      if(STOP.some(s => lineUp.startsWith(s) || lineUp.includes(s)) && line.length < 80){
+        stopParsing = true;
+        break;
+      }
+
+      // Skip column headers and legal text
+      if(SKIP.some(s => lineUp.includes(s))) continue;
+      if(line.length > 150) continue; // too long = description text
+
+      // Detect day header
+      const isDay = DAY_PATTERNS.some(p => p.test(line)) && line.length < 70;
+      if(isDay){
+        currentDay = {dayName: line.trim(), exercises:[]};
+        days.push(currentDay);
+        continue;
+      }
+
+      if(!currentDay) continue;
+
+      // Try to parse exercise row
+      // Format: [LP] [Name] [Sets] [Reps] [Tempo] [Rest] ...
+      // LP can be: 1, 2, 3A, 3B, 4, 5A, 5B etc.
+      const ex = parsePdfExerciseLine(line);
+      if(ex) currentDay.exercises.push(ex);
+    }
+
+    // Filter days with exercises
+    const validDays = days.filter(d => d.exercises.length > 0);
+    if(!validDays.length) return null;
+
+    return {planName, days: validDays};
+  } catch(e){
+    console.error('PDF parse error:', e);
+    return null;
+  }
+}
+
+function parsePdfExerciseLine(line){
+  // Pattern: starts with number or number+letter (LP column)
+  // e.g. "1 Wyciskanie sztangi 3 6-8 2/0/X/1 120s-180s"
+  // e.g. "3A Rozpiętki 3 10-12 2/0/X/0 20s"
+  const lpMatch = line.match(/^(\d+[A-B]?)\s+(.+)/i);
+  if(!lpMatch) return null;
+
+  const lp = lpMatch[1];
+  const rest = lpMatch[2].trim();
+  const isSuper = /[AB]$/i.test(lp);
+
+  // Extract sets (single digit 2-6) and reps from the end of the name
+  // Reps patterns: "6-8", "8-10", "10-12", "12", "12-15 (na stronę)", "do upadku 8-10 do upadku"
+  // Sets: single number 2-5 before reps
+  const repsPattern = /(\d+[-–]\d+(?:\s*(?:na\s+\w+|do\s+upadku))?|\d+(?:\s+na\s+\w+)?)\s*(?:\d+[-–]\d+\s+do\s+upadku)?$/i;
+  const setsPattern = /\b([2-6])\s+(?:\d+[-–]\d+|\d+)/;
+
+  // Try to find sets and reps by looking for tempo pattern (X/X/X/X) as anchor
+  const tempoMatch = rest.match(/\b(\d+)\/([0X])\/([X\d])\/([0-9])\b/);
+
+  let name, sets = 3, reps = '8-12', tempo = '', restTime = '';
+
+  if(tempoMatch){
+    // Everything before the tempo-adjacent number block is the name
+    const tempoIdx = rest.indexOf(tempoMatch[0]);
+    const beforeTempo = rest.slice(0, tempoIdx).trim();
+    tempo = tempoMatch[0];
+    restTime = rest.slice(tempoIdx + tempoMatch[0].length).trim().split(' ')[0] || '';
+
+    // Last tokens before tempo are sets+reps
+    const tokens = beforeTempo.split(/\s+/);
+    // Find reps (last token with digits/dash)
+    let repsIdx = -1;
+    for(let i = tokens.length-1; i >= 0; i--){
+      if(/^\d+[-–]\d+$/.test(tokens[i]) || /^\d+$/.test(tokens[i])){
+        repsIdx = i;
+        break;
+      }
+    }
+    if(repsIdx > 0 && /^\d$/.test(tokens[repsIdx-1])){
+      sets = parseInt(tokens[repsIdx-1]) || 3;
+      reps = tokens[repsIdx];
+      name = tokens.slice(0, repsIdx-1).join(' ');
+    } else if(repsIdx >= 0){
+      reps = tokens[repsIdx];
+      name = tokens.slice(0, repsIdx).join(' ');
+    } else {
+      name = beforeTempo;
+    }
+  } else {
+    // No tempo - simpler parse: grab last 1-2 numbers as sets/reps
+    const tokens = rest.split(/\s+/);
+    let repsIdx = -1;
+    for(let i = tokens.length-1; i >= 0; i--){
+      if(/^\d+[-–]\d+$/.test(tokens[i]) || /^\d+$/.test(tokens[i])){
+        repsIdx = i; break;
+      }
+    }
+    if(repsIdx > 0 && /^[2-6]$/.test(tokens[repsIdx-1])){
+      sets = parseInt(tokens[repsIdx-1]);
+      reps = tokens[repsIdx];
+      name = tokens.slice(0, repsIdx-1).join(' ');
+    } else if(repsIdx >= 0){
+      reps = tokens[repsIdx];
+      name = tokens.slice(0, repsIdx).join(' ');
+    } else {
+      name = rest;
+    }
+  }
+
+  // Clean up name
+  name = name.trim().replace(/\s+/g,' ');
+
+  // Handle "do upadku" reps
+  if(rest.toLowerCase().includes('do upadku')){
+    const m = rest.match(/(\d+[-–]\d+)\s+do\s+upadku/i);
+    if(m) reps = m[1] + ' (do upadku)';
+  }
+
+  // Handle "2S6-8P" format (2 serie 6-8 powt + 1 backoff)
+  const sSeriesMatch = rest.match(/(\d+)S(\d+[-–]\d+)P/);
+  if(sSeriesMatch){
+    sets = parseInt(sSeriesMatch[1]);
+    reps = sSeriesMatch[2];
+    const backOff = rest.includes('Back off') ? ' +1 back off' : '';
+    reps += backOff;
+  }
+
+  if(!name || name.length < 3) return null;
+
+  // Ignore lines that are clearly not exercises
+  const NON_EX = ['ROZGRZEWKA','PORADNIK','TEMPO TO','METODA','STRATEGIE','UZUPEŁNIANIE','PRZYKŁAD'];
+  if(NON_EX.some(n => name.toUpperCase().includes(n))) return null;
+  if(name.length > 100) return null;
+
+  return {
+    name,
+    sets: isNaN(sets) ? 3 : sets,
+    reps: reps || '8-12',
+    rest: restTime,
+    tempo,
+    notes: isSuper ? '🔗 Superseria' : ''
+  };
+}
+
 
 function processExcelFile(file){
   updateImportStep(2);
