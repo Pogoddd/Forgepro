@@ -4,32 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ForgePro</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
-  --bg: #0a0a0a;
-  --surface: #141414;
-  --surface2: #1e1e1e;
-  --surface3: #252525;
-  --border: #2a2a2a;
-  --orange: #FF5A00;
-  --orange-dim: rgba(255,90,0,0.12);
-  --orange-mid: rgba(255,90,0,0.35);
-  --green: #00C48C;
-  --green-dim: rgba(0,196,140,0.12);
-  --red: #FF3B5C;
-  --red-dim: rgba(255,59,92,0.12);
-  --text: #f0f0f0;
-  --muted: #777;
-  --dim: #444;
-  --radius: 14px;
+  --bg: #0c0c0f;
+  --surface: #13131a;
+  --surface2: #1a1a24;
+  --surface3: #22222e;
+  --border: #2a2a38;
+  --orange: #E07B39;
+  --orange-dim: rgba(224,123,57,0.10);
+  --orange-mid: rgba(224,123,57,0.32);
+  --green: #34D399;
+  --green-dim: rgba(52,211,153,0.10);
+  --red: #F87171;
+  --red-dim: rgba(248,113,113,0.10);
+  --steel: #4FC3F7;
+  --steel-dim: rgba(79,195,247,0.10);
+  --text: #F1F0EE;
+  --muted: #6b6b7e;
+  --dim: #3a3a4a;
+  --radius: 12px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;}
 body{
   background:var(--bg);color:var(--text);
-  font-family:'Barlow',sans-serif;
+  font-family:'DM Sans',sans-serif;
   max-width:430px;margin:0 auto;
   display:flex;flex-direction:column;
   position:relative;
@@ -61,7 +63,7 @@ body{
 .panel.open .panel-inner{transform:translateY(0);}
 .panel-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;}
 .panel-title{
-  font-family:'Barlow Condensed',sans-serif;
+  font-family:'Syne',sans-serif;
   font-size:22px;font-weight:800;
   padding:16px 18px 12px;
   border-bottom:1px solid var(--border);
@@ -79,7 +81,7 @@ body{
 .nav-btn{
   display:flex;flex-direction:column;align-items:center;gap:4px;
   background:none;border:none;color:var(--dim);cursor:pointer;
-  font-family:'Barlow',sans-serif;font-size:10px;font-weight:600;
+  font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;
   letter-spacing:.06em;text-transform:uppercase;padding:4px 16px;
   transition:color .15s;
 }
@@ -94,8 +96,9 @@ body{
   border-bottom:1px solid var(--border);
   position:sticky;top:0;z-index:50;
 }
-.logo{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;letter-spacing:-.5px;}
+.logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.3px;}
 .logo span{color:var(--orange);}
+.logo-mark{width:28px;height:28px;flex-shrink:0;}
 
 /* CARDS */
 .card{
@@ -113,7 +116,7 @@ body{
 /* BUTTONS */
 .btn{
   display:block;width:100%;padding:15px;border-radius:var(--radius);
-  font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;
+  font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
   letter-spacing:.04em;text-transform:uppercase;border:none;cursor:pointer;
   transition:transform .12s,opacity .12s;
 }
@@ -127,7 +130,7 @@ body{
 .inp{
   width:100%;background:var(--surface2);border:1px solid var(--border);
   border-radius:10px;padding:11px 13px;
-  color:var(--text);font-family:'Barlow',sans-serif;font-size:15px;font-weight:500;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;
   outline:none;transition:border-color .15s;
 }
 .inp:focus{border-color:var(--orange-mid);}
@@ -150,7 +153,7 @@ select.inp option{background:var(--surface2);}
   flex:1;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius);padding:14px 10px;text-align:center;
 }
-.stat-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;line-height:1;}
+.stat-val{font-family:'Syne',sans-serif;font-size:25px;font-weight:800;line-height:1;}
 .stat-unit{font-size:13px;color:var(--muted);font-weight:600;}
 .stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.06em;text-transform:uppercase;}
 .stat-delta{font-size:11px;font-weight:700;margin-top:2px;}
@@ -164,7 +167,7 @@ select.inp option{background:var(--surface2);}
 }
 .set-box.done{border-color:var(--green);background:var(--green-dim);}
 .set-box.active{border-color:var(--orange);background:var(--orange-dim);}
-.set-box .sw{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;}
+.set-box .sw{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;}
 .set-box.done .sw{color:var(--green);}
 .set-box.active .sw{color:var(--orange);}
 .set-box .sr{font-size:10px;color:var(--muted);margin-top:2px;}
@@ -176,7 +179,7 @@ select.inp option{background:var(--surface2);}
   flex-direction:column;align-items:center;justify-content:center;gap:12px;
 }
 .rest-overlay.on{display:flex;}
-.rest-big{font-family:'Barlow Condensed',sans-serif;font-size:96px;font-weight:900;color:var(--orange);letter-spacing:4px;line-height:1;}
+.rest-big{font-family:'Syne',sans-serif;font-size:76px;font-weight:800;color:var(--orange);letter-spacing:4px;line-height:1;}
 .rest-lbl{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
 .rest-ring{width:180px;height:180px;position:relative;margin-bottom:8px;}
 .rest-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
@@ -193,7 +196,7 @@ select.inp option{background:var(--surface2);}
 .search-bar svg{width:18px;height:18px;color:var(--muted);flex-shrink:0;}
 .search-bar input{
   flex:1;background:none;border:none;outline:none;
-  color:var(--text);font-family:'Barlow',sans-serif;font-size:15px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;
 }
 .search-bar input::placeholder{color:var(--dim);}
 
@@ -246,7 +249,7 @@ select.inp option{background:var(--surface2);}
   cursor:pointer;
 }
 .hist-date{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
-.hist-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px;}
+.hist-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px;}
 .hist-meta{display:flex;gap:12px;}
 .hist-meta span{font-size:12px;color:var(--muted);}
 .hist-meta strong{color:var(--text);font-weight:600;}
@@ -261,7 +264,7 @@ select.inp option{background:var(--surface2);}
 .chat-inp{
   flex:1;background:var(--surface2);border:1px solid var(--border);
   border-radius:12px;padding:11px 13px;
-  color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;outline:none;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
 }
 .chat-inp:focus{border-color:var(--orange-mid);}
 .chat-send{
@@ -331,6 +334,43 @@ select.inp option{background:var(--surface2);}
 .ex-pill-btn.current{background:var(--orange);border-color:var(--orange);color:#fff;}
 .ex-pill-btn.done-pill{background:var(--green-dim);border-color:rgba(0,196,140,.4);color:var(--green);}
 
+/* WORKOUT TEMPLATE CARD */
+.wkt-template-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:10px;
+  cursor:pointer;transition:border-color .15s;
+  position:relative;overflow:hidden;
+}
+.wkt-template-card:active{background:var(--surface2);}
+.wkt-template-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange);}
+.wkt-template-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:3px;}
+.wkt-template-meta{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.wkt-ex-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.wkt-ex-chip{font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--muted);}
+
+/* NEW WORKOUT EXERCISE ROW */
+.new-ex-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  transition:background .12s;
+}
+.new-ex-row .ex-name{font-size:15px;font-weight:600;margin-bottom:2px;}
+.new-ex-row .ex-cat{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.add-btn{
+  width:32px;height:32px;border-radius:8px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  flex-shrink:0;transition:all .12s;
+}
+.add-btn.add{background:var(--orange-dim);border:1px solid var(--orange-mid);color:var(--orange);}
+.add-btn.added{background:var(--green-dim);border:1px solid rgba(52,211,153,.4);color:var(--green);}
+.sel-chip{
+  display:flex;align-items:center;gap:5px;
+  background:var(--orange-dim);border:1px solid var(--orange-mid);
+  border-radius:20px;padding:5px 10px;white-space:nowrap;
+  font-size:12px;font-weight:600;color:var(--text);flex-shrink:0;
+}
+.sel-chip button{background:none;border:none;color:var(--orange);cursor:pointer;font-size:14px;padding:0;line-height:1;}
+
 .chips{display:flex;gap:7px;overflow-x:auto;padding:8px 14px 0;scrollbar-width:none;}
 .chip{
   flex-shrink:0;padding:7px 14px;border-radius:20px;
@@ -359,7 +399,7 @@ select.inp option{background:var(--surface2);}
 
 /* EMPTY STATE */
 .empty{text-align:center;padding:48px 24px;color:var(--muted);}
-.empty .eico{font-size:48px;margin-bottom:12px;}
+.empty .eico{font-size:43px;margin-bottom:12px;}
 .empty p{font-size:14px;line-height:1.6;}
 
 ::-webkit-scrollbar{width:0;height:0;}
@@ -371,7 +411,7 @@ select.inp option{background:var(--surface2);}
   transition:all .2s;margin:0 16px;
 }
 .import-drop:hover,.import-drop.drag{border-color:var(--orange);background:var(--orange-dim);}
-.import-drop .drop-ico{font-size:40px;margin-bottom:10px;}
+.import-drop .drop-ico{font-size:36px;margin-bottom:10px;}
 .import-drop p{font-size:14px;color:var(--muted);line-height:1.6;}
 .import-drop strong{color:var(--text);}
 
@@ -380,7 +420,7 @@ select.inp option{background:var(--surface2);}
   border-radius:12px;padding:14px;margin-bottom:10px;
 }
 .plan-day-title{
-  font-family:'Barlow Condensed',sans-serif;
+  font-family:'Syne',sans-serif;
   font-size:18px;font-weight:800;margin-bottom:8px;color:var(--orange);
 }
 .plan-ex-row{
@@ -444,8 +484,8 @@ select.inp option{background:var(--surface2);}
     </div>
   </div>
   <div style="display:flex;gap:12px;margin-top:4px;">
-    <button onclick="addRest(30)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 18px;font-family:'Barlow',sans-serif;font-size:14px;cursor:pointer;">+30s</button>
-    <button onclick="skipRest()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px 24px;font-family:'Barlow',sans-serif;font-size:14px;cursor:pointer;">Pomiń →</button>
+    <button onclick="addRest(30)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">+30s</button>
+    <button onclick="skipRest()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px 24px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">Pomiń →</button>
   </div>
 </div>
 
@@ -541,7 +581,11 @@ select.inp option{background:var(--surface2);}
 <!-- ======= SCREEN: HOME ======= -->
 <div class="screen active" id="screen-home">
   <div class="top-bar">
-    <div class="logo">Forge<span>Pro</span></div>
+    <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="28" height="28" rx="7" fill="#E07B39"/>
+  <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="13" cy="8" r="1.5" fill="white"/>
+</svg>Forge<span>Pro</span></div>
     <div id="streakBadge" class="badge">🔥 0 dni</div>
   </div>
 
@@ -557,7 +601,7 @@ select.inp option{background:var(--surface2);}
   </div>
 
   <div style="padding:12px 14px 0;display:flex;gap:10px;">
-    <button class="btn btn-primary" onclick="openPanel('newWorkoutPanel')" style="flex:2;">+ Nowy trening</button>
+    <button class="btn btn-primary" onclick="goTo('workouts')" style="flex:2;">+ Nowy trening</button>
     <button class="btn btn-ghost" onclick="goTo('ai')" style="flex:1;">AI 💬</button>
   </div>
 
@@ -575,8 +619,8 @@ select.inp option{background:var(--surface2);}
   <div class="top-bar" style="padding:48px 18px 0 18px;flex-direction:column;gap:0;border:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:10px;">
       <button onclick="confirmFinish()" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px;">‹</button>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:.02em;" id="liveWktName">TRENING</div>
-      <div id="wktTimer" style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--orange);">00:00</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:.02em;" id="liveWktName">TRENING</div>
+      <div id="wktTimer" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--orange);">00:00</div>
     </div>
     <!-- Tab bar -->
     <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;width:100%;margin-bottom:2px;">
@@ -600,7 +644,7 @@ select.inp option{background:var(--surface2);}
       <!-- Current exercise card -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:4px;">
         <div style="padding:14px 16px 10px;">
-          <div id="logExName" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;margin-bottom:2px;"></div>
+          <div id="logExName" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:2px;"></div>
           <div id="logPlanInfo" style="font-size:12px;color:var(--orange);font-weight:600;margin-bottom:4px;"></div>
           <div id="logPrevInfo" style="font-size:12px;color:var(--muted);"></div>
         </div>
@@ -654,7 +698,11 @@ select.inp option{background:var(--surface2);}
 <!-- ======= SCREEN: PRO COACH ======= -->
 <div class="screen" id="screen-ai">
   <div class="top-bar">
-    <div class="logo">Forge<span>Pro</span></div>
+    <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="28" height="28" rx="7" fill="#E07B39"/>
+  <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="13" cy="8" r="1.5" fill="white"/>
+</svg>Forge<span>Pro</span></div>
     <div style="font-size:11px;color:var(--muted);">Pro Coach</div>
   </div>
 
@@ -681,7 +729,11 @@ select.inp option{background:var(--surface2);}
 <!-- ======= SCREEN: HISTORY ======= -->
 <div class="screen" id="screen-history">
   <div class="top-bar">
-    <div class="logo">Forge<span>Pro</span></div>
+    <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="28" height="28" rx="7" fill="#E07B39"/>
+  <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="13" cy="8" r="1.5" fill="white"/>
+</svg>Forge<span>Pro</span></div>
     <div style="font-size:11px;color:var(--muted);">Historia</div>
   </div>
   <div id="historyList" style="padding-bottom:16px;"></div>
@@ -690,7 +742,11 @@ select.inp option{background:var(--surface2);}
 <!-- ======= SCREEN: PROGRESS ======= -->
 <div class="screen" id="screen-progress">
   <div class="top-bar">
-    <div class="logo">Forge<span>Pro</span></div>
+    <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="28" height="28" rx="7" fill="#E07B39"/>
+  <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="13" cy="8" r="1.5" fill="white"/>
+</svg>Forge<span>Pro</span></div>
     <div style="font-size:11px;color:var(--muted);">Progres</div>
   </div>
 
@@ -725,15 +781,72 @@ select.inp option{background:var(--surface2);}
 
 </div><!-- end #app -->
 
+<!-- ======= SCREEN: TRENINGI ======= -->
+<div class="screen" id="screen-workouts">
+  <div class="top-bar">
+    <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#E07B39"/><path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="8" r="1.5" fill="white"/></svg>Forge<span>Pro</span></div>
+    <div style="font-size:11px;color:var(--muted);font-weight:500;">Moje treningi</div>
+  </div>
+
+  <div id="workoutsTemplateList" style="padding:12px 14px 100px;"></div>
+
+  <!-- Import Excel shortcut -->
+  <div style="position:fixed;bottom:84px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:0 14px 10px;background:linear-gradient(transparent,var(--bg) 40%);">
+    <button class="btn btn-primary" onclick="goTo('new-workout')" style="margin-bottom:8px;">
+      + Dodaj trening
+    </button>
+    <button class="btn btn-ghost" onclick="openImportPanel()" style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:11px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Importuj plan z Excela (od trenera)
+    </button>
+  </div>
+</div>
+
+<!-- ======= SCREEN: NOWY TRENING ======= -->
+<div class="screen" id="screen-new-workout">
+  <!-- Header -->
+  <div class="top-bar" style="flex-direction:column;align-items:stretch;gap:10px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="goTo('workouts')" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:2px 6px 2px 0;line-height:1;">‹</button>
+      <input id="newWktNameInput" class="inp" placeholder="Nazwa treningu (np. Push Day A)" style="flex:1;font-size:15px;font-weight:600;">
+      <button onclick="saveNewWorkoutAndStart()" class="btn btn-primary" style="flex-shrink:0;padding:10px 16px;font-size:13px;width:auto;">Zacznij →</button>
+    </div>
+    <!-- Search -->
+    <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="newWktSearch" type="text" placeholder="Szukaj ćwiczenia…" style="background:none;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;flex:1;" oninput="renderNewWktExList()">
+    </div>
+    <!-- Category tabs -->
+    <div id="newWktCatTabs" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;"></div>
+  </div>
+
+  <!-- Selected exercises summary bar -->
+  <div id="selectedSummaryBar" style="display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;">
+    <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Wybrane ćwiczenia</div>
+    <div id="selectedChips" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;"></div>
+  </div>
+
+  <!-- Exercise list -->
+  <div id="newWktExList" style="overflow-y:auto;padding-bottom:80px;"></div>
+
+  <!-- Custom exercise button -->
+  <div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:0 14px;">
+    <button class="btn btn-ghost" onclick="addCustomExercise()" style="font-size:13px;padding:12px;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Dodaj własne ćwiczenie
+    </button>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="nav">
   <button class="nav-btn active" id="nav-home" onclick="goTo('home')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     Główny
   </button>
-  <button class="nav-btn" id="nav-workout" onclick="openPanel('newWorkoutPanel')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-    Trening
+  <button class="nav-btn" id="nav-workouts" onclick="goTo('workouts')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 3h2v18H3z"/><path d="M19 3h2v18h-2z"/></svg>
+    Treningi
   </button>
   <button class="nav-btn" id="nav-ai" onclick="goTo('ai')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -815,18 +928,213 @@ function load(){
 }
 
 // ===================== NAVIGATION =====================
-const screens = ['home','workout','ai','history','progress'];
+const screens = ['home','workout','ai','history','progress','workouts','new-workout'];
 function goTo(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   const nb = document.getElementById('nav-'+name);
   if(nb) nb.classList.add('active');
+  // workouts tab highlights the nav-workouts button
+  if(name==='new-workout') document.getElementById('nav-workouts')?.classList.add('active');
   document.getElementById('app').scrollTop = 0;
   if(name==='home') renderHome();
   if(name==='history') renderHistory();
   if(name==='progress') renderProgress();
   if(name==='ai') initAI();
+  if(name==='workouts') renderWorkoutsScreen();
+  if(name==='new-workout') initNewWorkoutScreen();
+}
+
+// ===================== WORKOUTS SCREEN =====================
+let savedTemplates = []; // [{id, name, exercises:[]}]
+
+function renderWorkoutsScreen(){
+  // Load saved templates from state
+  savedTemplates = state.savedTemplates || [];
+  const importedPlans = state.importedPlans || [];
+  const container = document.getElementById('workoutsTemplateList');
+
+  let html = '';
+
+  // Imported plans section
+  if(importedPlans.length){
+    html += `<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">📊 Od trenera</div>`;
+    importedPlans.forEach(plan=>{
+      plan.days.forEach(day=>{
+        html += `<div class="wkt-template-card" onclick="startFromImportedPlan(${plan.id},'${encodeURIComponent(day.dayName)}')">
+          <div class="wkt-template-name">${day.dayName}</div>
+          <div class="wkt-template-meta">${plan.planName} · ${day.exercises.length} ćwiczeń</div>
+          <div class="wkt-ex-chips">${day.exercises.slice(0,4).map(e=>`<div class="wkt-ex-chip">${e.name.split(' ').slice(0,3).join(' ')}</div>`).join('')}${day.exercises.length>4?`<div class="wkt-ex-chip">+${day.exercises.length-4}</div>`:''}</div>
+        </div>`;
+      });
+    });
+  }
+
+  // My templates
+  if(savedTemplates.length){
+    html += `<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:${importedPlans.length?'16px':0} 0 8px;">💪 Moje treningi</div>`;
+    savedTemplates.forEach(tpl=>{
+      html += `<div class="wkt-template-card" style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;" onclick="startFromTemplate(${tpl.id})">
+          <div class="wkt-template-name">${tpl.name}</div>
+          <div class="wkt-template-meta">${tpl.exercises.length} ćwiczeń</div>
+          <div class="wkt-ex-chips">${tpl.exercises.slice(0,4).map(e=>`<div class="wkt-ex-chip">${e.name.split(' ').slice(0,2).join(' ')}</div>`).join('')}</div>
+        </div>
+        <button onclick="deleteTemplate(${tpl.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px;flex-shrink:0;">×</button>
+      </div>`;
+    });
+  }
+
+  if(!importedPlans.length && !savedTemplates.length){
+    html = `<div class="empty" style="padding-top:60px;">
+      <div class="eico">🏋️</div>
+      <p>Brak treningów.<br>Dodaj swój pierwszy plan!</p>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function startFromTemplate(id){
+  const tpl = savedTemplates.find(t=>t.id===id);
+  if(!tpl) return;
+  state.currentWorkout = {
+    id: Date.now(),
+    name: tpl.name,
+    startTime: Date.now(),
+    exercises: tpl.exercises.map(e=>({...e, sets:[]})),
+    done: false,
+  };
+  state.currentExIdx = 0;
+  save();
+  startWorkoutTimer();
+  goTo('workout');
+  renderLiveWorkout();
+  switchWktTab('info');
+}
+
+function deleteTemplate(id){
+  if(!confirm('Usunąć szablon?')) return;
+  state.savedTemplates = (state.savedTemplates||[]).filter(t=>t.id!==id);
+  save();
+  renderWorkoutsScreen();
+}
+
+// ===================== NEW WORKOUT SCREEN =====================
+let newWktSelected = []; // [{id,name,cat,muscle}]
+let newWktCat = 'Wszystkie';
+
+function initNewWorkoutScreen(){
+  newWktSelected = [];
+  newWktCat = 'Wszystkie';
+  document.getElementById('newWktNameInput').value = '';
+  document.getElementById('newWktSearch').value = '';
+  renderNewWktCats();
+  renderNewWktExList();
+  updateSelectedBar();
+}
+
+function renderNewWktCats(){
+  const cats = ['Wszystkie','Klatka','Plecy','Nogi','Barki','Biceps','Triceps','Core'];
+  document.getElementById('newWktCatTabs').innerHTML = cats.map(c=>`
+    <div class="cat-tab${c===newWktCat?' active':''}" onclick="setNewWktCat('${c}')" style="flex-shrink:0;">${c}</div>
+  `).join('');
+}
+
+function setNewWktCat(c){
+  newWktCat = c;
+  renderNewWktCats();
+  renderNewWktExList();
+}
+
+function renderNewWktExList(){
+  const q = (document.getElementById('newWktSearch').value||'').toLowerCase();
+  const list = EXERCISES_DB.filter(e=>{
+    const matchCat = newWktCat==='Wszystkie' || e.cat===newWktCat;
+    const matchQ = !q || e.name.toLowerCase().includes(q) || e.muscle.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+  const selIds = newWktSelected.map(e=>e.id);
+
+  document.getElementById('newWktExList').innerHTML = list.map(ex=>{
+    const isAdded = selIds.includes(ex.id);
+    return `<div class="new-ex-row">
+      <div>
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-cat">${ex.cat} · ${ex.muscle}</div>
+      </div>
+      <button class="add-btn ${isAdded?'added':'add'}" onclick="toggleNewWktEx('${ex.id}')">
+        ${isAdded?'✓':'+'}
+      </button>
+    </div>`;
+  }).join('') || '<div class="empty"><p>Brak wyników</p></div>';
+}
+
+function toggleNewWktEx(id){
+  const ex = EXERCISES_DB.find(e=>e.id===id);
+  if(!ex) return;
+  const idx = newWktSelected.findIndex(e=>e.id===id);
+  if(idx>=0) newWktSelected.splice(idx,1);
+  else newWktSelected.push(ex);
+  renderNewWktExList();
+  updateSelectedBar();
+}
+
+function updateSelectedBar(){
+  const bar = document.getElementById('selectedSummaryBar');
+  const chips = document.getElementById('selectedChips');
+  if(!newWktSelected.length){ bar.style.display='none'; return; }
+  bar.style.display='block';
+  chips.innerHTML = newWktSelected.map(e=>`
+    <div class="sel-chip">
+      ${e.name.split(' ').slice(0,2).join(' ')}
+      <button onclick="toggleNewWktEx('${e.id}')">×</button>
+    </div>
+  `).join('');
+}
+
+function addCustomExercise(){
+  const name = prompt('Nazwa ćwiczenia:');
+  if(!name||!name.trim()) return;
+  const cat = 'Custom';
+  const id = 'custom_'+Date.now();
+  const ex = {id, name:name.trim(), cat, muscle:'Własne'};
+  EXERCISES_DB.push(ex);
+  newWktSelected.push(ex);
+  renderNewWktExList();
+  updateSelectedBar();
+}
+
+function saveNewWorkoutAndStart(){
+  if(!newWktSelected.length){ alert('Dodaj co najmniej 1 ćwiczenie!'); return; }
+  const name = document.getElementById('newWktNameInput').value.trim() ||
+    'Trening ' + new Date().toLocaleDateString('pl',{weekday:'long'});
+
+  // Save as template
+  if(!state.savedTemplates) state.savedTemplates = [];
+  const tpl = {
+    id: Date.now(),
+    name,
+    exercises: newWktSelected.map(e=>({...e})),
+    createdAt: Date.now(),
+  };
+  state.savedTemplates.push(tpl);
+
+  // Start workout immediately
+  state.currentWorkout = {
+    id: Date.now()+1,
+    name,
+    startTime: Date.now(),
+    exercises: newWktSelected.map(e=>({...e, sets:[]})),
+    done: false,
+  };
+  state.currentExIdx = 0;
+  save();
+  startWorkoutTimer();
+  goTo('workout');
+  renderLiveWorkout();
+  switchWktTab('info');
 }
 
 function openPanel(id){
@@ -1011,7 +1319,7 @@ function renderInfoTab(){
             <div style="font-size:12px;color:var(--muted);">${ex.plannedSets||3} serie · ${ex.plannedReps||'8-12'} powt.${ex.rest?' · '+ex.rest:''}</div>
           </div>
           <div style="flex-shrink:0;text-align:right;">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:${allDone?'var(--green)':doneSets>0?'var(--orange)':'var(--muted)'};">${doneSets}/${totalSets}</div>
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${allDone?'var(--green)':doneSets>0?'var(--orange)':'var(--muted)'};">${doneSets}/${totalSets}</div>
             <div style="font-size:10px;color:var(--muted);">serii</div>
           </div>
         </div>
@@ -1240,12 +1548,12 @@ function renderHome(){
     document.getElementById('lastWorkoutCard').innerHTML=`
       <div class="card">
         <div class="card-label">Ostatni trening · ${new Date(last.startTime).toLocaleDateString('pl',{weekday:'long'})}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;">${last.name}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;">${last.name}</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">${last.exercises.length} ćwiczeń · ${dur} min · ${vol} kg obj.</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           ${last.exercises.slice(0,3).map(e=>{
             const topSet=e.sets.reduce((a,b)=>b.kg>a.kg?b:a,{kg:0,reps:0});
-            return topSet.kg?`<div><div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;">${topSet.kg}<span style="font-size:12px;color:var(--muted);">kg</span></div><div style="font-size:10px;color:var(--muted);">${e.name.split(' ').slice(0,2).join(' ')}</div></div>`:''}).join('')}
+            return topSet.kg?`<div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;">${topSet.kg}<span style="font-size:12px;color:var(--muted);">kg</span></div><div style="font-size:10px;color:var(--muted);">${e.name.split(' ').slice(0,2).join(' ')}</div></div>`:''}).join('')}
         </div>
         <div class="ai-block" style="margin-top:12px;">
           <div class="ai-label"><span class="ai-dot"></span>Pro Coach</div>
@@ -1256,7 +1564,7 @@ function renderHome(){
   } else {
     document.getElementById('lastWorkoutCard').innerHTML=`
       <div class="card" style="text-align:center;padding:28px 20px;">
-        <div style="font-size:36px;margin-bottom:10px;">💪</div>
+        <div style="font-size:32px;margin-bottom:10px;">💪</div>
         <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Zacznij pierwszy trening!</div>
         <div style="font-size:13px;color:var(--muted);line-height:1.6;">Naciśnij "Nowy trening", wybierz ćwiczenia i zacznij śledzić swój progres z Pro Coachem.</div>
       </div>`;
@@ -1402,7 +1710,7 @@ function renderPRs(){
   list.innerHTML=Object.entries(prs).sort((a,b)=>b[1]-a[1]).map(([n,kg])=>`
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <span style="font-size:14px;">🏆 ${n}</span>
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;">${kg}<span style="font-size:13px;color:var(--muted);">kg</span></span>
+      <span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;">${kg}<span style="font-size:13px;color:var(--muted);">kg</span></span>
     </div>
   `).join('');
 }
@@ -1618,7 +1926,7 @@ function processExcelFile(file){
   document.getElementById('importContent').innerHTML = `
     <div class="ai-parsing">
       <div class="ai-spinner"></div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;">Czytam plik…</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Czytam plik…</div>
       <div style="font-size:13px;color:var(--muted);">Wczytuję Excel i analizuję strukturę</div>
     </div>
   `;
@@ -1654,7 +1962,7 @@ function processExcelFile(file){
       document.getElementById('importContent').innerHTML = `
         <div class="ai-parsing">
           <div class="ai-spinner"></div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;">Analizuję plan…</div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Analizuję plan…</div>
           <div style="font-size:13px;color:var(--muted);">Czytam strukturę planu treningowego</div>
         </div>
       `;
@@ -1667,7 +1975,7 @@ function processExcelFile(file){
         document.getElementById('importContent').innerHTML = `
           <div class="ai-parsing">
             <div class="ai-spinner"></div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;">AI analizuje plan…</div>
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">AI analizuje plan…</div>
             <div style="font-size:13px;color:var(--muted);">Niestandardowy format — Claude go odczyta</div>
           </div>
         `;
@@ -1709,7 +2017,7 @@ function showImportPreview(plan){
     <div style="padding:0 16px;">
       <div style="background:var(--green-dim);border:1px solid rgba(0,196,140,.3);border-radius:12px;padding:14px;margin-bottom:14px;">
         <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--green);text-transform:uppercase;margin-bottom:4px;">✓ Plan rozpoznany</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;">${plan.planName}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">${plan.planName}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px;">${plan.days.length} dni treningowych · ${totalEx} ćwiczeń</div>
       </div>
 
@@ -1724,7 +2032,7 @@ function showImportPreview(plan){
                   ${ex.notes?`<div class="plan-ex-sets">${ex.notes}</div>`:''}
                 </div>
                 <div style="text-align:right;flex-shrink:0;margin-left:12px;">
-                  <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;">${ex.sets}×${ex.reps}</div>
+                  <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;">${ex.sets}×${ex.reps}</div>
                 </div>
               </div>
             `).join('')}
@@ -1757,8 +2065,8 @@ function importPlanToApp(){
 
   document.getElementById('importContent').innerHTML = `
     <div style="padding:0 16px;text-align:center;">
-      <div style="font-size:56px;margin:24px 0 12px;">🎉</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;margin-bottom:8px;">Plan zaimportowany!</div>
+      <div style="font-size:47px;margin:24px 0 12px;">🎉</div>
+      <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:8px;">Plan zaimportowany!</div>
       <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:24px;">
         <strong style="color:var(--text);">${parsedPlan.planName}</strong><br>
         ${parsedPlan.days.length} dni · ${totalEx} ćwiczeń<br>
@@ -1785,7 +2093,7 @@ function showImportError(msg){
   document.getElementById('importContent').innerHTML = `
     <div style="padding:0 16px;">
       <div style="background:var(--red-dim);border:1px solid rgba(255,59,92,.3);border-radius:12px;padding:18px;margin-bottom:14px;text-align:center;">
-        <div style="font-size:32px;margin-bottom:8px;">⚠️</div>
+        <div style="font-size:28px;margin-bottom:8px;">⚠️</div>
         <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Nie udało się odczytać planu</div>
         <div style="font-size:13px;color:var(--muted);line-height:1.6;">${msg}</div>
       </div>
@@ -1819,7 +2127,7 @@ function renderImportedPlans(){
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
             <div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;">${plan.planName}</div>
+              <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;">${plan.planName}</div>
               <div style="font-size:11px;color:var(--muted);margin-top:2px;">${plan.days.length} dni treningowych · Importowany ${new Date(plan.importedAt).toLocaleDateString('pl')}</div>
             </div>
           </div>
@@ -1829,7 +2137,7 @@ function renderImportedPlans(){
                 style="flex-shrink:0;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;text-align:left;transition:all .15s;"
                 onmouseover="this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'"
                 onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'">
-                <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;">${day.dayName}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;">${day.dayName}</div>
                 <div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;">${day.exercises.length} ćwiczeń</div>
               </button>
             `).join('')}
