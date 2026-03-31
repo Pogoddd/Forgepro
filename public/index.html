@@ -174,19 +174,31 @@ select.inp option{background:var(--surface2);}
 .set-box.active .sw{color:var(--orange);}
 .set-box .sr{font-size:10px;color:var(--muted);margin-top:2px;}
 
-/* REST OVERLAY */
+/* REST TIMER — slide-up card */
 .rest-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.93);
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
   z-index:400;display:none;
-  flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  flex-direction:column;
+  pointer-events:none;
 }
 .rest-overlay.on{display:flex;}
-.rest-big{font-family:'Syne',sans-serif;font-size:76px;font-weight:800;color:var(--orange);letter-spacing:4px;line-height:1;}
-.rest-lbl{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);}
-.rest-ring{width:180px;height:180px;position:relative;margin-bottom:8px;}
-.rest-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
-.rest-ring .track{fill:none;stroke:var(--surface2);stroke-width:6;}
-.rest-ring .prog{fill:none;stroke:var(--orange);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .9s linear;}
+.rest-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px 20px 0 0;
+  padding:18px 20px 28px;
+  pointer-events:all;
+  box-shadow:0 -8px 40px rgba(0,0,0,.5);
+  animation:slideUp .3s cubic-bezier(.32,.72,0,1);
+}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.rest-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.rest-lbl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+.rest-progress-bar{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-bottom:14px;}
+.rest-progress-fill{height:100%;background:var(--orange);border-radius:2px;transition:width .9s linear;}
+.rest-big{font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--orange);letter-spacing:2px;line-height:1;text-align:center;margin-bottom:16px;}
+.rest-ring{display:none;}
 
 /* SEARCH BAR */
 .search-bar{
@@ -497,22 +509,22 @@ select.inp option{background:var(--surface2);}
   </div>
 </div>
 
-<!-- ===== REST OVERLAY ===== -->
+<!-- ===== REST TIMER (slide-up card) ===== -->
 <div class="rest-overlay" id="restOv">
-  <div class="rest-lbl">ODPOCZYNEK</div>
-  <div class="rest-ring">
-    <svg viewBox="0 0 180 180">
-      <circle class="track" cx="90" cy="90" r="84"/>
-      <circle class="prog" id="restRing" cx="90" cy="90" r="84"
-        stroke-dasharray="528" stroke-dashoffset="0"/>
-    </svg>
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-      <div class="rest-big" id="restNum">2:30</div>
+  <div class="rest-card">
+    <div class="rest-top">
+      <span class="rest-lbl">⏱ Odpoczynek</span>
+      <span id="restNextEx" style="font-size:12px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
     </div>
-  </div>
-  <div style="display:flex;gap:12px;margin-top:4px;">
-    <button onclick="addRest(30)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">+30s</button>
-    <button onclick="skipRest()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px 24px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">Pomiń →</button>
+    <div class="rest-progress-bar">
+      <div class="rest-progress-fill" id="restProgressFill" style="width:100%;"></div>
+    </div>
+    <div class="rest-big" id="restNum">2:30</div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="addRest(30)" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">+30s</button>
+      <button onclick="addRest(-15)" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">−15s</button>
+      <button onclick="skipRest()" style="flex:2;background:var(--orange);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Pomiń →</button>
+    </div>
   </div>
 </div>
 
@@ -707,7 +719,7 @@ select.inp option{background:var(--surface2);}
       </div>
 
       <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn btn-ghost" onclick="startRest(150)" style="flex:1;">⏱ Odpoczynek</button>
+        <button class="btn btn-ghost" onclick="startManualRest()" style="flex:1;">⏱ Odpoczynek</button>
       </div>
     </div>
   </div>
@@ -1372,13 +1384,55 @@ function switchWktTab(tab){
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
     document.getElementById('wktTab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t===tab?'block':'none';
   });
-  const btn = document.getElementById('mainActionBtn');
-  if(tab==='info'){ btn.textContent='▶ Zacznij logować'; btn.onclick=()=>switchWktTab('log'); }
-  else if(tab==='log'){ btn.textContent='✓ Zapisz serię'; btn.onclick=logSet; }
-  else { btn.textContent='🏁 Zakończ trening'; btn.onclick=confirmFinish; }
   if(tab==='log') renderLogTab();
   if(tab==='info') renderInfoTab();
   if(tab==='hist') renderHistTab();
+  updateMainActionBtn(tab);
+}
+
+function updateMainActionBtn(tab){
+  const wkt = state.currentWorkout;
+  const btn = document.getElementById('mainActionBtn');
+  if(!btn) return;
+  if(!tab){
+    // Auto-detect active tab
+    tab = document.getElementById('tab-log').classList.contains('active') ? 'log' :
+          document.getElementById('tab-hist').classList.contains('active') ? 'hist' : 'info';
+  }
+  if(tab==='log'){
+    // Sprawdź czy to ostatnia seria ostatniego ćwiczenia
+    const ex = wkt?.exercises[state.currentExIdx];
+    const allDone = wkt?.exercises.every(e=>e.sets.length>=(e.plannedSets||3));
+    if(allDone){
+      btn.textContent='🏁 Zakończ trening';
+      btn.className='btn btn-primary';
+      btn.style.background='var(--green)';
+      btn.onclick=confirmFinish;
+    } else {
+      btn.textContent='✓ Zapisz serię';
+      btn.style.background='';
+      btn.className='btn btn-primary';
+      btn.onclick=logSet;
+    }
+  } else if(tab==='info'){
+    const allDone = wkt?.exercises.every(e=>e.sets.length>=(e.plannedSets||3));
+    if(allDone){
+      btn.textContent='🏁 Zakończ trening';
+      btn.className='btn btn-primary';
+      btn.style.background='var(--green)';
+      btn.onclick=confirmFinish;
+    } else {
+      btn.textContent='▶ Zacznij logować';
+      btn.style.background='';
+      btn.className='btn btn-primary';
+      btn.onclick=()=>switchWktTab('log');
+    }
+  } else {
+    btn.textContent='🏁 Zakończ trening';
+    btn.style.background='';
+    btn.className='btn btn-primary';
+    btn.onclick=confirmFinish;
+  }
 }
 
 function renderInfoTab(){
@@ -1427,6 +1481,7 @@ function renderInfoTab(){
       </div>
     `;
   }).join('');
+  updateMainActionBtn('info');
 }
 
 function goToLogEx(idx){
@@ -1477,6 +1532,7 @@ function renderLogTab(){
     const repsM = (ex.plannedReps||'').match(/^(\d+)/);
     if(repsM) document.getElementById('liveReps').value = repsM[1];
   }
+  updateMainActionBtn('log');
 }
 
 function renderHistTab(){
@@ -1502,8 +1558,21 @@ function renderHistTab(){
 
 function confirmFinish(){
   if(!state.currentWorkout) return;
-  const totalSets = state.currentWorkout.exercises.reduce((s,e)=>s+e.sets.length,0);
-  if(totalSets === 0 || confirm(`Zakończyć trening? Zalogowano ${totalSets} serii.`)){
+  const wkt = state.currentWorkout;
+  const totalSets = wkt.exercises.reduce((s,e)=>s+e.sets.length,0);
+  const allDone = wkt.exercises.every(e=>e.sets.length>=(e.plannedSets||3));
+  if(totalSets === 0){
+    if(confirm('Nie zalogowano żadnych serii. Na pewno zakończyć?')) finishWorkout();
+    return;
+  }
+  // Jeśli wszystkie ćwiczenia zakończone — kończymy bez confirm
+  if(allDone){
+    finishWorkout(true); // skipConfirm
+    return;
+  }
+  const done = wkt.exercises.filter(e=>e.sets.length>0).length;
+  const total = wkt.exercises.length;
+  if(confirm(`Zakończyć trening?\n\nZalogowano: ${totalSets} serii (${done}/${total} ćwiczeń)`)){
     finishWorkout();
   }
 }
@@ -1547,7 +1616,8 @@ function logSet(){
     // Pokaż przycisk "Następne ćwiczenie" zamiast rest timera
     showNextExButton();
   } else {
-    startRest(150);
+    const nextExName = wkt.exercises[state.currentExIdx + 1]?.name || '';
+    startRest(150, nextExName);
   }
 }
 
@@ -1565,18 +1635,18 @@ function showNextExButton(){
 
   // Podmień zawartość overlay tymczasowo
   restOv.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:32px 24px;text-align:center;">
-      <div style="font-size:40px;">✅</div>
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--green);">Seria zakończona!</div>
-      <div style="font-size:14px;color:var(--muted);">Wszystkie serie zalogowane</div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 20px;width:100%;max-width:280px;">
-        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Następne ćwiczenie</div>
+    <div class="rest-card">
+      <div class="rest-top">
+        <span class="rest-lbl" style="color:var(--green);">✅ Ćwiczenie ukończone!</span>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Następne ćwiczenie</div>
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;">${nextEx.name}</div>
         <div style="font-size:12px;color:var(--orange);margin-top:2px;">${nextEx.plannedSets||3} serie · ${nextEx.plannedReps||'8-12'} powt.</div>
       </div>
-      <div style="display:flex;gap:10px;width:100%;max-width:280px;">
-        <button onclick="skipToNextEx()" style="flex:2;background:var(--orange);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">Następne →</button>
-        <button onclick="restBeforeNext()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">⏱ 2:30</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="restBeforeNext()" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">⏱ Odpocznij</button>
+        <button onclick="skipToNextEx()" style="flex:2;background:var(--orange);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">Następne →</button>
       </div>
     </div>
   `;
@@ -1591,27 +1661,28 @@ function skipToNextEx(){
 
 function restBeforeNext(){
   restoreRestOverlay();
-  // ustaw flagę żeby po odliczeniu przejść do następnego ćwiczenia
   window._afterRestGoNext = true;
-  startRest(150);
+  const wkt = state.currentWorkout;
+  const nextExName = wkt?.exercises[state.currentExIdx + 1]?.name || '';
+  startRest(150, nextExName);
 }
 
 function restoreRestOverlay(){
   document.getElementById('restOv').innerHTML = `
-    <div class="rest-lbl">ODPOCZYNEK</div>
-    <div class="rest-ring">
-      <svg viewBox="0 0 180 180">
-        <circle class="track" cx="90" cy="90" r="84"/>
-        <circle class="prog" id="restRing" cx="90" cy="90" r="84"
-          stroke-dasharray="528" stroke-dashoffset="0"/>
-      </svg>
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-        <div class="rest-big" id="restNum">2:30</div>
+    <div class="rest-card">
+      <div class="rest-top">
+        <span class="rest-lbl">⏱ Odpoczynek</span>
+        <span id="restNextEx" style="font-size:12px;color:var(--muted);"></span>
       </div>
-    </div>
-    <div style="display:flex;gap:12px;margin-top:4px;">
-      <button onclick="addRest(30)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">+30s</button>
-      <button onclick="skipRest()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:10px 24px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">Pomiń →</button>
+      <div class="rest-progress-bar">
+        <div class="rest-progress-fill" id="restProgressFill" style="width:100%;"></div>
+      </div>
+      <div class="rest-big" id="restNum">2:30</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="addRest(30)" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">+30s</button>
+        <button onclick="addRest(-15)" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">−15s</button>
+        <button onclick="skipRest()" style="flex:2;background:var(--orange);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Pomiń →</button>
+      </div>
     </div>
   `;
 }
@@ -1635,8 +1706,8 @@ function nextEx(){
   }
 }
 
-function finishWorkout(){
-  if(!confirm('Zakończyć trening?')) return;
+function finishWorkout(skipConfirm){
+  if(!skipConfirm && !confirm('Zakończyć trening?')) return;
   if(state.currentWorkout){
     state.currentWorkout.done = true;
     state.currentWorkout.endTime = Date.now();
@@ -1652,31 +1723,63 @@ function finishWorkout(){
 
 // ===================== REST TIMER =====================
 let restInterval=null, restTotal=150, restRemaining=150;
-function startRest(sec){
+let wakeLock=null;
+
+async function acquireWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  }catch(e){}
+}
+function releaseWakeLock(){
+  if(wakeLock){try{wakeLock.release();}catch(e){} wakeLock=null;}
+}
+
+function startRest(sec, nextExName){
   restTotal=sec; restRemaining=sec;
   document.getElementById('restOv').classList.add('on');
+  // Pokaż nazwę następnego ćwiczenia
+  const nextEl = document.getElementById('restNextEx');
+  if(nextEl) nextEl.textContent = nextExName ? 'Następne: '+nextExName : '';
   clearInterval(restInterval);
   updateRestUI();
+  acquireWakeLock();
+  // Powiadomienie systemu (tytuł strony) — widoczne na ekranie blokady w niektórych przeglądarkach
   restInterval=setInterval(()=>{
     restRemaining--;
     if(restRemaining<=0){skipRest();return;}
     updateRestUI();
+    const m=Math.floor(restRemaining/60), s=String(restRemaining%60).padStart(2,'0');
+    document.title = `⏱ ${m}:${s} — ForgePro`;
   },1000);
 }
-function addRest(sec){restRemaining+=sec;updateRestUI();}
+function addRest(sec){
+  restRemaining = Math.max(1, restRemaining+sec);
+  updateRestUI();
+}
 function skipRest(){
   clearInterval(restInterval);
   document.getElementById('restOv').classList.remove('on');
+  document.title = 'ForgePro';
+  releaseWakeLock();
   if(window._afterRestGoNext){
     window._afterRestGoNext = false;
     nextEx();
   }
 }
+function startManualRest(){
+  const wkt = state.currentWorkout;
+  const nextExName = wkt?.exercises[state.currentExIdx + 1]?.name || '';
+  startRest(150, nextExName);
+}
+
 function updateRestUI(){
   const m=Math.floor(restRemaining/60), s=String(restRemaining%60).padStart(2,'0');
   document.getElementById('restNum').textContent=m+':'+s;
-  const circ=528, offset=circ*(1-restRemaining/restTotal);
-  document.getElementById('restRing').style.strokeDashoffset=offset;
+  const pct = Math.max(0, (restRemaining/restTotal)*100);
+  const fill = document.getElementById('restProgressFill');
+  if(fill) fill.style.width = pct+'%';
 }
 
 // ===================== HOME =====================
