@@ -1,94 +1,342 @@
-# 🔥 ForgePro — Instrukcja uruchomienia
+# 🔥 ForgePro — AI-Powered Fitness Tracker
 
-## Krok 1 — Darmowy klucz Groq API (2 minuty, bez karty)
-
-1. Wejdź na https://console.groq.com
-2. Kliknij "Sign Up" — możesz zalogować się przez GitHub
-3. Kliknij "API Keys" → "Create API Key"
-4. Skopiuj klucz (zaczyna się od `gsk_...`) — zapisz go!
+Nowoczesna aplikacja PWA do trackowania treningów siłowych z wykorzystaniem sztucznej inteligencji (Groq API).
 
 ---
 
-## Krok 2 — Wrzuć projekt na GitHub (3 minuty)
+## 🆕 CO NOWEGO W TEJ WERSJI
 
-Rozpakuj ZIP, otwórz terminal w folderze `forgepro-app`:
+✅ **System logowania** (Firebase Authentication)  
+✅ **Dokumentacja UI/UX** (kompletny redesign)  
+✅ **3 grafiki promocyjne** (HTML/CSS)  
+✅ **Gotowe do wdrożenia na GitHub**
 
-```bash
-git init
-git add .
-git commit -m "ForgePro init"
+---
+
+## 📁 STRUKTURA PROJEKTU
+
+```
+forgepro-app/
+├── public/
+│   ├── index.html          # Główna aplikacja PWA
+│   ├── auth.html           # System logowania (Firebase)
+│   └── promo/              # Grafiki promocyjne
+│       ├── forgepro-promo-brutalist.html
+│       ├── forgepro-promo-gradient.html
+│       └── forgepro-promo-cyberpunk.html
+├── docs/
+│   ├── INSTRUKCJA_LOGOWANIE.md     # Jak wdrożyć Firebase Auth
+│   └── FORGEPRO_UIUX_REDESIGN.md   # Dokumentacja UI/UX
+├── server.js               # Backend (Express + Groq API)
+├── package.json
+├── railway.toml
+└── README.md
 ```
 
-Wejdź na **github.com** → kliknij "+" → "New repository":
-- Nazwa: `forgepro-app`
-- Kliknij "Create repository"
+---
 
-Skopiuj komendy które GitHub pokazuje i wklej w terminalu:
+## 🚀 WGRYWANIE NA GITHUB — KROK PO KROKU
+
+### OPCJA A: Nowe repozytorium
+
 ```bash
+# 1. Otwórz terminal w folderze forgepro-app
+cd forgepro-app
+
+# 2. Zainicjuj Git (jeśli nie ma .git)
+git init
+
+# 3. Dodaj wszystkie pliki
+git add .
+
+# 4. Commit
+git commit -m "ForgePro - dodano auth system, dokumentację i grafiki promo"
+
+# 5. Połącz z GitHub (zamień TWOJ_LOGIN na swój nick GitHub)
 git remote add origin https://github.com/TWOJ_LOGIN/forgepro-app.git
+
+# 6. Wypchnij na GitHub
 git branch -M main
 git push -u origin main
 ```
 
----
+### OPCJA B: Aktualizacja istniejącego repo
 
-## Krok 3 — Wdróż na Railway (5 minut, darmowe)
+```bash
+# 1. Otwórz terminal w folderze forgepro-app
+cd forgepro-app
 
-1. Wejdź na https://railway.app
-2. Kliknij "Login" → zaloguj się przez GitHub
-3. Kliknij "New Project" → "Deploy from GitHub repo"
-4. Wybierz repozytorium `forgepro-app`
-5. Poczekaj ~2 minuty aż Railway wdroży aplikację
+# 2. Dodaj nowe pliki
+git add .
 
-### Dodaj klucz API:
-1. Kliknij na projekt → zakładka **"Variables"**
-2. Kliknij **"Add Variable"**
-3. Nazwa: `GROQ_API_KEY`
-4. Wartość: `gsk_...` (Twój klucz z kroku 1)
-5. Kliknij "Add" — Railway automatycznie zrestartuje
+# 3. Commit
+git commit -m "Add Firebase Auth, UI/UX docs, promo graphics"
 
-### Pobierz link:
-1. Zakładka **"Settings"** → **"Domains"**
-2. Kliknij **"Generate Domain"**
-3. Dostaniesz link np. `forgepro-app.up.railway.app`
+# 4. Wypchnij
+git push origin main
+```
 
 ---
 
-## Krok 4 — Zainstaluj na iPhone jako apka
+## 🔐 WDROŻENIE SYSTEMU LOGOWANIA
 
-1. Otwórz **Safari** na iPhone
-2. Wejdź na swój link Railway
-3. Naciśnij ikonę **Udostępnij** (kwadrat ze strzałką w górę)
-4. Wybierz **"Dodaj do ekranu głównego"**
-5. Nazwij **"ForgePro"** → **"Dodaj"**
+### Krok 1: Skonfiguruj Firebase
 
-Masz ikonkę na ekranie głównym — działa jak natywna apka! 🎉
+1. Wejdź na https://console.firebase.google.com
+2. Utwórz nowy projekt "ForgePro"
+3. Dodaj aplikację Web
+4. Skopiuj konfigurację Firebase
+
+### Krok 2: Wklej dane do kodu
+
+Otwórz `public/auth.html` i znajdź linię ~30:
+
+```javascript
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",        // ← WKLEJ SWOJE
+  authDomain: "your-project...", // ← WKLEJ SWOJE
+  // ... reszta
+};
+```
+
+### Krok 3: Włącz metody logowania
+
+W Firebase Console → Authentication → Sign-in method:
+- ✅ Email/Password
+- ✅ Google
+- ✅ Apple (opcjonalnie)
+
+### 📖 Pełna instrukcja: `docs/INSTRUKCJA_LOGOWANIE.md`
 
 ---
 
-## Lokalny test na komputerze
+## 🎨 UŻYWANIE GRAFIK PROMOCYJNYCH
+
+Grafiki znajdują się w `public/promo/`:
+
+1. **Brutalist** (`forgepro-promo-brutalist.html`)
+   - Ciemna, surowa, industrialna
+   - Dla zaawansowanych użytkowników
+
+2. **Gradient** (`forgepro-promo-gradient.html`)
+   - Jasna, energetyczna, nowoczesna
+   - Dla szerokiej grupy docelowej
+
+3. **Cyberpunk** (`forgepro-promo-cyberpunk.html`)
+   - Neon, futurystyczna, tech
+   - Dla tech-savvy użytkowników
+
+**Jak użyć:**
+- Otwórz w przeglądarce → wybierz ulubioną
+- Użyj na landing page, social media, App Store screenshots
+- Dostosuj tekst (zmień hasła w HTML)
+
+---
+
+## 📱 URUCHOMIENIE LOKALNIE
+
+### Wymagania
+- Node.js 16+
+- NPM
+
+### Instalacja
 
 ```bash
 cd forgepro-app
 npm install
 
-# Utwórz plik .env z kluczem:
+# Utwórz plik .env z kluczem Groq
 echo "GROQ_API_KEY=gsk_TWOJ_KLUCZ" > .env
 
-# Uruchom serwer (dodaj require('dotenv').config() na górze server.js):
-node -e "require('dotenv').config(); require('./server.js')"
+# Uruchom serwer
+npm start
+# LUB
+node server.js
 
-# Otwórz w przeglądarce:
+# Otwórz w przeglądarce
 # http://localhost:3000
 ```
 
 ---
 
-## Koszty
+## ☁️ DEPLOY NA RAILWAY
 
-| Usługa | Koszt |
-|--------|-------|
-| Railway | Darmowe (500h/mies) |
-| Groq API | **Całkowicie darmowe** (14 400 req/dzień) |
-| GitHub | Darmowe |
-| **RAZEM** | **$0/miesiąc** |
+### Krok 1: Wypchnij na GitHub (patrz wyżej)
+
+### Krok 2: Railway setup
+
+1. Wejdź na https://railway.app
+2. Login przez GitHub
+3. New Project → Deploy from GitHub repo
+4. Wybierz `forgepro-app`
+
+### Krok 3: Dodaj klucz API
+
+W Railway → Variables:
+- Klucz: `GROQ_API_KEY`
+- Wartość: `gsk_...` (Twój klucz Groq)
+
+### Krok 4: Wygeneruj domenę
+
+Settings → Domains → Generate Domain
+
+**🎉 Gotowe! Aplikacja działa na Railway.**
+
+---
+
+## 📚 DOKUMENTACJA
+
+### System logowania
+📖 `docs/INSTRUKCJA_LOGOWANIE.md`
+- Konfiguracja Firebase
+- Integracja z aplikacją
+- Bezpieczeństwo
+- Troubleshooting
+
+### UI/UX Design
+📖 `docs/FORGEPRO_UIUX_REDESIGN.md`
+- Architektura ekranów
+- Design system (kolory, typografia)
+- Komponenty
+- Animacje
+- Roadmapa implementacji
+
+---
+
+## 🔑 KLUCZE API
+
+### Groq API (AI)
+- Bezpłatny: 14,400 requestów/dzień
+- Rejestracja: https://console.groq.com
+- Dodaj w Railway Variables: `GROQ_API_KEY`
+
+### Firebase (Auth + Database)
+- Bezpłatny: 50,000 użytkowników/miesiąc
+- Rejestracja: https://console.firebase.google.com
+- Konfiguracja w `public/auth.html`
+
+---
+
+## 💰 KOSZTY
+
+| Usługa | Free Tier | Miesięczny koszt |
+|--------|-----------|------------------|
+| Railway | 500h wykonania | **$0** |
+| Groq API | 14,400 req/dzień | **$0** |
+| Firebase Auth | 50,000 użytkowników | **$0** |
+| Firebase Firestore | 1GB + 50k odczytów/dzień | **$0** |
+| **RAZEM** | | **$0/miesiąc** |
+
+---
+
+## 🛠️ STACK TECHNOLOGICZNY
+
+**Frontend:**
+- Pure HTML/CSS/JavaScript (no framework)
+- PWA (Progressive Web App)
+- Firebase SDK 10.x (Authentication)
+
+**Backend:**
+- Node.js + Express
+- Groq API (llama-3.3-70b)
+- Railway hosting
+
+**AI:**
+- Model: Llama 3.3 70B (via Groq)
+- Funkcje: Analiza progresu, sugestie treningowe, odpowiedzi na pytania
+
+---
+
+## 🐛 TROUBLESHOOTING
+
+### Problem: "Brak GROQ_API_KEY"
+→ Dodaj w Railway Variables LUB w pliku `.env` lokalnie
+
+### Problem: Firebase błędy autoryzacji
+→ Sprawdź czy dodałeś domenę Railway w Firebase Console → Authorized domains
+
+### Problem: Aplikacja nie ładuje się
+→ Sprawdź Railway logs: `railway logs`
+
+### Problem: Git push error
+→ Sprawdź czy masz połączone remote:
+```bash
+git remote -v
+```
+
+---
+
+## 📞 WSPARCIE
+
+- **Firebase Docs:** https://firebase.google.com/docs/auth
+- **Groq API Docs:** https://console.groq.com/docs
+- **Railway Docs:** https://docs.railway.app
+
+---
+
+## 📝 CHANGELOG
+
+### v2.0.0 (2026-04-02)
+- ➕ System logowania Firebase (Email, Google, Apple)
+- ➕ Dokumentacja UI/UX (20 stron)
+- ➕ 3 grafiki promocyjne (HTML/CSS)
+- ➕ Nowa struktura folderów
+- ➕ Instrukcje GitHub
+
+### v1.0.0 (2026-03-29)
+- ✨ Pierwsze wydanie
+- AI Coach (Groq)
+- Tracking treningów
+- Import Excel/PDF
+- PWA functionality
+
+---
+
+## 📄 LICENCJA
+
+MIT License - możesz swobodnie modyfikować i używać komercyjnie.
+
+---
+
+## 🤝 CONTRIBUTING
+
+Pull requesty mile widziane! 
+
+```bash
+# Fork repo
+# Stwórz branch
+git checkout -b feature/twoja-funkcja
+
+# Commit
+git commit -m "Add twoja-funkcja"
+
+# Push
+git push origin feature/twoja-funkcja
+
+# Otwórz Pull Request na GitHub
+```
+
+---
+
+## 🎯 ROADMAPA
+
+### Q2 2026
+- [ ] Integracja Firestore (synchronizacja danych)
+- [ ] Service Worker (offline mode)
+- [ ] Push notifications
+
+### Q3 2026
+- [ ] Stripe paywall (premium features)
+- [ ] Social sharing (progress screenshots)
+- [ ] Community leaderboards
+
+### Q4 2026
+- [ ] React Native / Flutter (native apps)
+- [ ] App Store / Google Play submission
+- [ ] Apple Watch integration
+
+---
+
+**Zbudowane z 💪 przez twórców ForgePro**
+
+Wersja: 2.0.0 | Data: 02.04.2026

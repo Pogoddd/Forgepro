@@ -1,0 +1,8 @@
+Rzeczy Do poprawy w aplikacji, stan 29.03.2026
+- AI nie umie przeanalizować planu za aplikacji (tyczy to się tez kontuzji wpisanych itp.)
+- AI Po 1 zapytaniu zamyka watek i znow się wita (trzeba będzie wprowadzić limit ai)
+- AI nie podlicza serri back off jako normalnej serii
+- AI zmienia lekko nazwy cwiczen po analizie pdf lub excel co jest mylne i w jednym przypadku zmienil nazwe ćwiczenia kompletnie
+- Po zakończonej serii powinien być przycisk żeby przejść do następnego ćwiczenia.
+- po zamknieciu panelu z treningiem, trening powinien być nadal dostępy tak aby w przyupadku przypadkowego wyjścia użytkownik mogl latwo wrocic ( powinno być ifno gdzies na ekranie ze trening jest aktywny).
+- Po rozpoczęciu treningu, nie powinno być można rozpocząć innego treningu, bo program się psuje lekko
