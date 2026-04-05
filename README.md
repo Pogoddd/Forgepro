@@ -1,3 +1,17 @@
+# ForgePro
+
+Aplikacja do trackowania treningow silowych z AI Coachem i importem planow.
+
+## Status repo
+
+Stan po cleanupie:
+- glowne flow aplikacji dziala w `public/index.html`
+- backend AI w `server.js` ma podstawowa walidacje wejscia i limity
+- dane sa nadal local-first (`localStorage`) z migracja z `forgepro_v1` do `forgepro_v2`
+- `public/auth.html` to nadal osobny prototyp ekranu logowania, niepelna integracja z glowna appka
+- `docs/` opisuje kierunek i pomysly produktowe, ale nie kazdy element jest jeszcze wdrozony
+
+---
 # 🔥 ForgePro — AI-Powered Fitness Tracker
 
 Nowoczesna aplikacja PWA do trackowania treningów siłowych z wykorzystaniem sztucznej inteligencji (Groq API).
@@ -340,3 +354,4 @@ git push origin feature/twoja-funkcja
 **Zbudowane z 💪 przez twórców ForgePro**
 
 Wersja: 2.0.0 | Data: 02.04.2026
+

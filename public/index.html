@@ -969,21 +969,90 @@ const EXERCISES_DB = [
 ];
 
 const CATS = ['Wszystkie','Klatka','Plecy','Nogi','Barki','Biceps','Triceps','Core'];
+const STORAGE_KEY = 'forgepro_v2';
+const LEGACY_STORAGE_KEY = 'forgepro_v1';
 
 // ===================== STATE =====================
-let state = {
-  workouts: [],       // historia treningów
-  currentWorkout: null,  // aktywny trening
-  currentExIdx: 0,
-  injuries: [],
-  streak: 0,
-};
+function createDefaultState(){
+  return {
+    workouts: [],
+    currentWorkout: null,
+    currentExIdx: 0,
+    injuries: [],
+    streak: 0,
+    savedTemplates: [],
+    importedPlans: [],
+    meta: {version: 2}
+  };
+}
+
+let state = createDefaultState();
+
+function cleanText(value, fallback=''){
+  if(value===null || value===undefined) return fallback;
+  const text = String(value).replace(/[\u0000-\u001F\u007F]/g,' ').replace(/\s+/g,' ').trim();
+  return text || fallback;
+}
+
+function esc(value){
+  return cleanText(value).replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
+
+function shortLabel(value, words=2){
+  return esc(cleanText(value).split(' ').slice(0,words).join(' '));
+}
+
+function encodeInlineArg(value){
+  return encodeURIComponent(cleanText(value)).replace(/'/g,'%27');
+}
+
+function migrateState(raw){
+  if(!raw || typeof raw !== 'object' || Array.isArray(raw)) return createDefaultState();
+  return {
+    ...createDefaultState(),
+    ...raw,
+    workouts: Array.isArray(raw.workouts) ? raw.workouts : [],
+    currentWorkout: raw.currentWorkout && typeof raw.currentWorkout === 'object' ? raw.currentWorkout : null,
+    currentExIdx: Number.isInteger(raw.currentExIdx) ? raw.currentExIdx : 0,
+    injuries: Array.isArray(raw.injuries) ? raw.injuries : [],
+    streak: Number.isFinite(raw.streak) ? raw.streak : 0,
+    savedTemplates: Array.isArray(raw.savedTemplates) ? raw.savedTemplates : [],
+    importedPlans: Array.isArray(raw.importedPlans) ? raw.importedPlans : [],
+    meta: {version: 2}
+  };
+}
+
+function withAbandonedCurrentWorkout(){
+  if(!state.currentWorkout || state.currentWorkout.done) return true;
+  if(!confirm('Masz aktywny trening: "' + cleanText(state.currentWorkout.name,'Trening') + '"\n\nCzy chcesz go porzucic i zaczac nowy?')) return false;
+  state.currentWorkout.done = true;
+  state.currentWorkout.abandoned = true;
+  state.currentWorkout.endTime = Date.now();
+  state.workouts.push(state.currentWorkout);
+  state.currentWorkout = null;
+  clearInterval(wktTimerInterval);
+  save();
+  return true;
+}
 
 // ===================== LOCALSTORAGE =====================
-function save(){localStorage.setItem('forgepro_v1', JSON.stringify(state));}
+function save(){localStorage.setItem(STORAGE_KEY, JSON.stringify(state));}
 function load(){
-  const d = localStorage.getItem('forgepro_v1');
-  if(d) state = JSON.parse(d);
+  const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+  if(!raw) return;
+  try{
+    state = migrateState(JSON.parse(raw));
+    if(localStorage.getItem(LEGACY_STORAGE_KEY) && !localStorage.getItem(STORAGE_KEY)) save();
+  }catch(err){
+    console.warn('Nie udalo sie wczytac danych aplikacji:', err);
+    state = createDefaultState();
+  }
 }
 
 // ===================== NAVIGATION =====================
@@ -1055,7 +1124,7 @@ function renderWorkoutsScreen(){
     html += `<div style="background:var(--orange-dim);border:1px solid var(--orange-mid);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
       <div>
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--orange);margin-bottom:3px;">🏋️ Trening aktywny</div>
-        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;">${state.currentWorkout.name}</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;">${esc(state.currentWorkout.name)}</div>
       </div>
       <button onclick="goTo('workout')" class="btn btn-primary" style="flex-shrink:0;width:auto;padding:10px 16px;font-size:13px;">Wróć →</button>
     </div>`;
@@ -1066,10 +1135,10 @@ function renderWorkoutsScreen(){
     html += `<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">📊 Od trenera</div>`;
     importedPlans.forEach(plan=>{
       plan.days.forEach(day=>{
-        html += `<div class="wkt-template-card" onclick="startFromImportedPlan(${plan.id},'${encodeURIComponent(day.dayName)}')">
-          <div class="wkt-template-name">${day.dayName}</div>
-          <div class="wkt-template-meta">${plan.planName} · ${day.exercises.length} ćwiczeń</div>
-          <div class="wkt-ex-chips">${day.exercises.slice(0,4).map(e=>`<div class="wkt-ex-chip">${e.name.split(' ').slice(0,3).join(' ')}</div>`).join('')}${day.exercises.length>4?`<div class="wkt-ex-chip">+${day.exercises.length-4}</div>`:''}</div>
+        html += `<div class="wkt-template-card" onclick="startFromImportedPlan(${plan.id},'${encodeInlineArg(day.dayName)}')">
+          <div class="wkt-template-name">${esc(day.dayName)}</div>
+          <div class="wkt-template-meta">${esc(plan.planName)} · ${day.exercises.length} ćwiczeń</div>
+          <div class="wkt-ex-chips">${day.exercises.slice(0,4).map(e=>`<div class="wkt-ex-chip">${shortLabel(e.name,3)}</div>`).join('')}${day.exercises.length>4?`<div class="wkt-ex-chip">+${day.exercises.length-4}</div>`:''}</div>
         </div>`;
       });
     });
@@ -1081,9 +1150,9 @@ function renderWorkoutsScreen(){
     savedTemplates.forEach(tpl=>{
       html += `<div class="wkt-template-card" style="display:flex;align-items:center;gap:12px;">
         <div style="flex:1;" onclick="startFromTemplate(${tpl.id})">
-          <div class="wkt-template-name">${tpl.name}</div>
+          <div class="wkt-template-name">${esc(tpl.name)}</div>
           <div class="wkt-template-meta">${tpl.exercises.length} ćwiczeń</div>
-          <div class="wkt-ex-chips">${tpl.exercises.slice(0,4).map(e=>`<div class="wkt-ex-chip">${e.name.split(' ').slice(0,2).join(' ')}</div>`).join('')}</div>
+          <div class="wkt-ex-chips">${tpl.exercises.slice(0,4).map(e=>`<div class="wkt-ex-chip">${shortLabel(e.name,2)}</div>`).join('')}</div>
         </div>
         <button onclick="deleteTemplate(${tpl.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px;flex-shrink:0;">×</button>
       </div>`;
@@ -1103,16 +1172,7 @@ function renderWorkoutsScreen(){
 function startFromTemplate(id){
   const tpl = savedTemplates.find(t=>t.id===id);
   if(!tpl) return;
-  if(state.currentWorkout && !state.currentWorkout.done){
-    if(!confirm('Masz aktywny trening: "'+state.currentWorkout.name+'"\n\nCzy chcesz go porzucić i zacząć nowy?')) return;
-    state.currentWorkout.done = true;
-    state.currentWorkout.abandoned = true;
-    state.currentWorkout.endTime = Date.now();
-    state.workouts.push(state.currentWorkout);
-    state.currentWorkout = null;
-    clearInterval(wktTimerInterval);
-    save();
-  }
+  if(!withAbandonedCurrentWorkout()) return;
   state.currentWorkout = {
     id: Date.now(),
     name: tpl.name,
@@ -1175,8 +1235,8 @@ function renderNewWktExList(){
     const isAdded = selIds.includes(ex.id);
     return `<div class="new-ex-row">
       <div>
-        <div class="ex-name">${ex.name}</div>
-        <div class="ex-cat">${ex.cat} · ${ex.muscle}</div>
+        <div class="ex-name">${esc(ex.name)}</div>
+        <div class="ex-cat">${esc(ex.cat)} · ${esc(ex.muscle)}</div>
       </div>
       <button class="add-btn ${isAdded?'added':'add'}" onclick="toggleNewWktEx('${ex.id}')">
         ${isAdded?'✓':'+'}
@@ -1202,18 +1262,18 @@ function updateSelectedBar(){
   bar.style.display='block';
   chips.innerHTML = newWktSelected.map(e=>`
     <div class="sel-chip">
-      ${e.name.split(' ').slice(0,2).join(' ')}
+      ${shortLabel(e.name,2)}
       <button onclick="toggleNewWktEx('${e.id}')">×</button>
     </div>
   `).join('');
 }
 
 function addCustomExercise(){
-  const name = prompt('Nazwa ćwiczenia:');
-  if(!name||!name.trim()) return;
+  const name = cleanText(prompt('Nazwa cwiczenia:'), '');
+  if(!name) return;
   const cat = 'Custom';
   const id = 'custom_'+Date.now();
-  const ex = {id, name:name.trim(), cat, muscle:'Własne'};
+  const ex = {id, name, cat, muscle:'Wlasne'};
   EXERCISES_DB.push(ex);
   newWktSelected.push(ex);
   renderNewWktExList();
@@ -1221,22 +1281,11 @@ function addCustomExercise(){
 }
 
 function saveNewWorkoutAndStart(){
-  if(state.currentWorkout && !state.currentWorkout.done){
-    if(!confirm('Masz aktywny trening: "'+state.currentWorkout.name+'"\n\nCzy chcesz go porzucić i zacząć nowy?')) return;
-    // Porzuć aktywny trening
-    state.currentWorkout.done = true;
-    state.currentWorkout.abandoned = true;
-    state.currentWorkout.endTime = Date.now();
-    state.workouts.push(state.currentWorkout);
-    state.currentWorkout = null;
-    clearInterval(wktTimerInterval);
-    save();
-  }
-  if(!newWktSelected.length){ alert('Dodaj co najmniej 1 ćwiczenie!'); return; }
-  const name = document.getElementById('newWktNameInput').value.trim() ||
+  if(!withAbandonedCurrentWorkout()) return;
+  if(!newWktSelected.length){ alert('Dodaj co najmniej 1 cwiczenie!'); return; }
+  const name = cleanText(document.getElementById('newWktNameInput').value) ||
     'Trening ' + new Date().toLocaleDateString('pl',{weekday:'long'});
 
-  // Save as template
   if(!state.savedTemplates) state.savedTemplates = [];
   const tpl = {
     id: Date.now(),
@@ -1246,7 +1295,6 @@ function saveNewWorkoutAndStart(){
   };
   state.savedTemplates.push(tpl);
 
-  // Start workout immediately
   state.currentWorkout = {
     id: Date.now()+1,
     name,
@@ -1313,8 +1361,8 @@ function renderExList(){
     const isAdded = added.includes(e.id);
     return `<div class="ex-item" onclick="addExercise('${e.id}')">
       <div>
-        <div class="ex-name">${e.name}</div>
-        <div class="ex-tag">${e.cat} · ${e.muscle}</div>
+        <div class="ex-name">${esc(e.name)}</div>
+        <div class="ex-tag">${esc(e.cat)} · ${esc(e.muscle)}</div>
       </div>
       <div class="ex-add${isAdded?' added':''}">
         ${isAdded?'✓':'+'}
@@ -1363,8 +1411,8 @@ function renderWktExList(){
   container.innerHTML = newWktExercises.map((e,i)=>`
     <div class="plan-item">
       <div class="ex-info">
-        <div class="ex-n">${e.name}</div>
-        <div class="ex-s">${e.muscle}</div>
+        <div class="ex-n">${esc(e.name)}</div>
+        <div class="ex-s">${esc(e.muscle)}</div>
       </div>
       <button class="ex-rm" onclick="removeFromNew(${i})">×</button>
     </div>
@@ -1378,7 +1426,8 @@ function removeFromNew(i){
 }
 
 function saveWorkoutTemplate(){
-  const name = document.getElementById('wktName').value.trim() || 'Trening ' + new Date().toLocaleDateString('pl');
+  if(!withAbandonedCurrentWorkout()) return;
+  const name = cleanText(document.getElementById('wktName').value) || 'Trening ' + new Date().toLocaleDateString('pl');
   if(newWktExercises.length===0){alert('Dodaj co najmniej 1 ćwiczenie!');return;}
 
   state.currentWorkout = {
@@ -1481,7 +1530,7 @@ function renderInfoTab(){
         <div class="ex-overview-header">
           <div class="ex-thumb">${icon}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:15px;margin-bottom:2px;line-height:1.3;">${ex.name}</div>
+            <div style="font-weight:700;font-size:15px;margin-bottom:2px;line-height:1.3;">${esc(ex.name)}</div>
             ${ex.notes?`<div style="font-size:11px;color:var(--orange);margin-bottom:2px;">${ex.notes}</div>`:''}
             <div style="font-size:12px;color:var(--muted);">${ex.plannedSets||3} serie · ${ex.plannedReps||'8-12'} powt.${ex.rest?' · '+ex.rest:''}</div>
           </div>
@@ -1532,7 +1581,7 @@ function renderLogTab(){
   document.getElementById('exPillRow').innerHTML = wkt.exercises.map((e,i)=>{
     const done = e.sets.length >= (e.plannedSets||3);
     const current = i === state.currentExIdx;
-    return `<div class="ex-pill-btn ${current?'current':done?'done-pill':''}" onclick="goToLogEx(${i})">${e.name.split(' ').slice(0,2).join(' ')}</div>`;
+    return `<div class="ex-pill-btn ${current?'current':done?'done-pill':''}" onclick="goToLogEx(${i})">${shortLabel(e.name,2)}</div>`;
   }).join('');
 
   // Exercise name + plan info
@@ -1577,7 +1626,7 @@ function renderHistTab(){
   }
   document.getElementById('wktHistList').innerHTML = wkt.exercises.filter(ex=>ex.sets.length>0).map(ex=>`
     <div style="margin-bottom:14px;">
-      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${ex.name}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${esc(ex.name)}</div>
       ${ex.sets.map((s,i)=>`
         <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
           <span style="color:var(--muted);font-size:13px;">Seria ${i+1}</span>
@@ -1622,7 +1671,7 @@ function showFinishModal(totalSets, doneExs, skippedExs){
       ${skippedExs.map(e=>`
         <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
           <span style="font-size:14px;">⬜</span>
-          <span style="font-size:14px;color:var(--muted);">${e.name}</span>
+          <span style="font-size:14px;color:var(--muted);">${esc(e.name)}</span>
         </div>
       `).join('')}
     </div>` : '';
@@ -1634,7 +1683,7 @@ function showFinishModal(totalSets, doneExs, skippedExs){
         <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:14px;">✅</span>
-            <span style="font-size:14px;">${e.name}</span>
+            <span style="font-size:14px;">${esc(e.name)}</span>
           </div>
           <span style="font-size:12px;color:var(--muted);">${e.sets.length} serii</span>
         </div>
@@ -1775,7 +1824,7 @@ function restoreRestOverlay(){
 
 async function aiLiveComment(ex, kg, reps){
   const prev = getPrevPerf(ex.id);
-  const prompt = `Trening na żywo. Ćwiczenie: ${ex.name}. Seria ${ex.sets.length}: ${kg}kg × ${reps} powt. ${prev?'Poprzednio: '+prev:'Pierwsze podejście.'} Daj 1 krótkie zdanie motywacji/wskazówkę. Max 20 słów. Po polsku.`;
+  const prompt = `Trening na �ywo. �wiczenie: ${cleanText(ex.name)}. Seria ${ex.sets.length}: ${kg}kg � ${reps} powt. ${prev?'Poprzednio: '+prev:'Pierwsze podej�cie.'} Daj 1 kr�tkie zdanie motywacji/wskaz�wk�. Max 20 s��w. Po polsku.`;
   try{
     const r = await callAI(prompt,'Jesteś zwięzłym Pro Coachem siłowni. Odpowiadasz jednym zdaniem, po polsku, konkretnie i motywująco.');
     const el = document.getElementById('liveAiTxt');
@@ -1916,12 +1965,12 @@ function renderHome(){
     document.getElementById('lastWorkoutCard').innerHTML=`
       <div class="card">
         <div class="card-label">Ostatni trening · ${new Date(last.startTime).toLocaleDateString('pl',{weekday:'long'})}</div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;">${last.name}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;">${esc(last.name)}</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">${last.exercises.length} ćwiczeń · ${dur} min · ${vol} kg obj.</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           ${last.exercises.slice(0,3).map(e=>{
             const topSet=e.sets.reduce((a,b)=>b.kg>a.kg?b:a,{kg:0,reps:0});
-            return topSet.kg?`<div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;">${topSet.kg}<span style="font-size:12px;color:var(--muted);">kg</span></div><div style="font-size:10px;color:var(--muted);">${e.name.split(' ').slice(0,2).join(' ')}</div></div>`:''}).join('')}
+            return topSet.kg?`<div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;">${topSet.kg}<span style="font-size:12px;color:var(--muted);">kg</span></div><div style="font-size:10px;color:var(--muted);">${shortLabel(e.name,2)}</div></div>`:''}).join('')}
         </div>
         <div class="ai-block" style="margin-top:12px;">
           <div class="ai-label"><span class="ai-dot"></span>Pro Coach</div>
@@ -1945,9 +1994,9 @@ function renderHome(){
 }
 
 async function loadHomeAI(last){
-  const summary = last.exercises.map(e=>`${e.name}: ${e.sets.map(s=>`${s.kg}kg×${s.reps}`).join(', ')}`).join('; ');
+  const summary = last.exercises.map(e=>`${cleanText(e.name)}: ${e.sets.map(s=>`${s.kg}kg�${s.reps}`).join(', ')}`).join('; ');
   try{
-    const r=await callAI(`Trening: ${last.name}. ${summary}. Daj krótką analizę i 1 konkretny tip na następny trening. Max 50 słów. Po polsku.`,
+    const r=await callAI(`Trening: ${cleanText(last.name)}. ${summary}. Daj kr�tk� analiz� i 1 konkretny tip na nast�pny trening. Max 50 s��w. Po polsku.`, 
       'Jesteś Pro Coachem siłowni. Zwięzły, konkretny, motywujący. Po polsku.');
     const el=document.getElementById('homeAiTxt');
     if(el) el.textContent=r;
@@ -1987,7 +2036,7 @@ function renderHistory(){
     const date=new Date(w.startTime);
     return `<div class="hist-item" onclick="showHistDetail(${w.id})">
       <div class="hist-date">${date.toLocaleDateString('pl',{weekday:'long',day:'numeric',month:'long'})}</div>
-      <div class="hist-name">${w.name}</div>
+      <div class="hist-name">${esc(w.name)}</div>
       <div class="hist-meta">
         <span>${w.exercises.length} <strong>ćwiczeń</strong></span>
         <span>${dur} <strong>min</strong></span>
@@ -2005,7 +2054,7 @@ function showHistDetail(id){
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">${new Date(w.startTime).toLocaleDateString('pl',{weekday:'long',day:'numeric',month:'long'})} · ${Math.round((w.endTime-w.startTime)/60000)} min</div>
     ${w.exercises.map(e=>`
       <div style="margin-bottom:16px;">
-        <div style="font-weight:700;font-size:15px;margin-bottom:6px;">${e.name}</div>
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px;">${esc(e.name)}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           ${e.sets.map((s,i)=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;">${s.kg}kg × ${s.reps}</div>`).join('')}
         </div>
@@ -2090,8 +2139,8 @@ function renderInjuries(){
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
       <div>
         <span class="idot ${inj.active?'red':'green'}"></span>
-        <span style="font-size:14px;font-weight:600;">${inj.name}</span>
-        <div style="font-size:11px;color:var(--muted);margin-left:15px;">${inj.desc}</div>
+        <span style="font-size:14px;font-weight:600;">${esc(inj.name)}</span>
+        <div style="font-size:11px;color:var(--muted);margin-left:15px;">${esc(inj.desc)}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:700;
@@ -2156,7 +2205,7 @@ function buildSystemContext(basePrompt){
   let planInfo = '';
   if(plans.length){
     planInfo = plans.map(p=>{
-      const days = p.days.map(d=>`${d.dayName}: ${d.exercises.map(e=>`${e.name} ${e.sets||''}×${e.reps||''}`).join(', ')}`).join(' | ');
+      const days = p.days.map(d=>`${d.dayName}: ${d.exercises.map(e=>`${cleanText(e.name)} ${e.sets||''}�${e.reps||''}`).join(', ')}`).join(' | ');
       return `Plan "${p.planName}": ${days}`;
     }).join('\n');
   }
@@ -2740,18 +2789,18 @@ function showImportPreview(plan){
     <div style="padding:0 16px;">
       <div style="background:var(--green-dim);border:1px solid rgba(0,196,140,.3);border-radius:12px;padding:14px;margin-bottom:14px;">
         <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--green);text-transform:uppercase;margin-bottom:4px;">✓ Plan rozpoznany</div>
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">${plan.planName}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">${esc(plan.planName)}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px;">${plan.days.length} dni treningowych · ${totalEx} ćwiczeń</div>
       </div>
 
       <div style="max-height:340px;overflow-y:auto;margin-bottom:14px;">
         ${plan.days.map(day=>`
           <div class="plan-day-card">
-            <div class="plan-day-title">${day.dayName}</div>
+            <div class="plan-day-title">${esc(day.dayName)}</div>
             ${day.exercises.map(ex=>`
               <div class="plan-ex-row">
                 <div>
-                  <div style="font-weight:600;">${ex.name}</div>
+                  <div style="font-weight:600;">${esc(ex.name)}</div>
                   ${ex.notes?`<div class="plan-ex-sets">${ex.notes}</div>`:''}
                 </div>
                 <div style="text-align:right;flex-shrink:0;margin-left:12px;">
@@ -2850,17 +2899,17 @@ function renderImportedPlans(){
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
             <div>
-              <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;">${plan.planName}</div>
+              <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;">${esc(plan.planName)}</div>
               <div style="font-size:11px;color:var(--muted);margin-top:2px;">${plan.days.length} dni treningowych · Importowany ${new Date(plan.importedAt).toLocaleDateString('pl')}</div>
             </div>
           </div>
           <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;">
             ${plan.days.map(day=>`
-              <button onclick="startFromImportedPlan(${plan.id},'${encodeURIComponent(day.dayName)}')"
+              <button onclick="startFromImportedPlan(${plan.id},'${encodeInlineArg(day.dayName)}')"
                 style="flex-shrink:0;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;text-align:left;transition:all .15s;"
                 onmouseover="this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'"
                 onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'">
-                <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;">${day.dayName}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;">${esc(day.dayName)}</div>
                 <div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;">${day.exercises.length} ćwiczeń</div>
               </button>
             `).join('')}
@@ -2873,16 +2922,7 @@ function renderImportedPlans(){
 }
 
 function startFromImportedPlan(planId, encodedDayName){
-  if(state.currentWorkout && !state.currentWorkout.done){
-    if(!confirm('Masz aktywny trening: "'+state.currentWorkout.name+'"\n\nCzy chcesz go porzucić i zacząć nowy?')) return;
-    state.currentWorkout.done = true;
-    state.currentWorkout.abandoned = true;
-    state.currentWorkout.endTime = Date.now();
-    state.workouts.push(state.currentWorkout);
-    state.currentWorkout = null;
-    clearInterval(wktTimerInterval);
-    save();
-  }
+  if(!withAbandonedCurrentWorkout()) return;
   const dayName = decodeURIComponent(encodedDayName);
   const plan = state.importedPlans.find(p=>p.id===planId);
   if(!plan) return;
@@ -3124,3 +3164,8 @@ if(state.currentWorkout&&!state.currentWorkout.done){
 </script>
 </body>
 </html>
+
+
+
+
+
