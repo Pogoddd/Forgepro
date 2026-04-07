@@ -647,10 +647,14 @@ select.inp option{background:var(--surface2);}
   <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="13" cy="8" r="1.5" fill="white"/>
 </svg>Forge<span>Pro</span></div>
-    <div id="streakBadge" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px;">🔥 0 dni</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="accountAction"></div>
+      <div id="streakBadge" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:4px;">🔥 0 dni</div>
+    </div>
   </div>
 
   <div class="week-row" id="weekRow"></div>
+  <div id="accountSummary"></div>
 
   <!-- Last workout or empty -->
   <div id="lastWorkoutCard"></div>
@@ -969,8 +973,10 @@ const EXERCISES_DB = [
 ];
 
 const CATS = ['Wszystkie','Klatka','Plecy','Nogi','Barki','Biceps','Triceps','Core'];
-const STORAGE_KEY = 'forgepro_v2';
-const LEGACY_STORAGE_KEY = 'forgepro_v1';
+const STORAGE_KEY = 'forgepro_v3';
+const RESET_STORAGE_KEYS = ['forgepro_v1', 'forgepro_v2'];
+const AUTH_SESSION_KEY = 'forgepro_auth_session_v1';
+const AUTH_USER_KEY = 'forgepro_auth_user_v1';
 
 // ===================== STATE =====================
 function createDefaultState(){
@@ -987,6 +993,7 @@ function createDefaultState(){
 }
 
 let state = createDefaultState();
+const aiInsightCache = {homeKey:'', homeText:'', progressKey:'', progressText:''};
 
 function cleanText(value, fallback=''){
   if(value===null || value===undefined) return fallback;
@@ -1043,16 +1050,48 @@ function withAbandonedCurrentWorkout(){
 
 // ===================== LOCALSTORAGE =====================
 function save(){localStorage.setItem(STORAGE_KEY, JSON.stringify(state));}
+function clearLegacyLocalData(){
+  RESET_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
+}
 function load(){
-  const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+  const raw = localStorage.getItem(STORAGE_KEY);
   if(!raw) return;
   try{
     state = migrateState(JSON.parse(raw));
-    if(localStorage.getItem(LEGACY_STORAGE_KEY) && !localStorage.getItem(STORAGE_KEY)) save();
   }catch(err){
     console.warn('Nie udalo sie wczytac danych aplikacji:', err);
     state = createDefaultState();
   }
+}
+
+function getAuthUser(){
+  try{
+    const raw = localStorage.getItem(AUTH_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(err){
+    return null;
+  }
+}
+
+function hasAuthSession(){
+  try{
+    const raw = localStorage.getItem(AUTH_SESSION_KEY);
+    if(!raw) return false;
+    const parsed = JSON.parse(raw);
+    return Boolean(parsed && parsed.uid);
+  }catch(err){
+    return false;
+  }
+}
+
+function requireAuthSession(){
+  return hasAuthSession();
+}
+
+function logoutApp(){
+  localStorage.removeItem(AUTH_SESSION_KEY);
+  localStorage.removeItem(AUTH_USER_KEY);
+  window.location.replace('/auth.html?logout=1');
 }
 
 // ===================== NAVIGATION =====================
@@ -1824,7 +1863,7 @@ function restoreRestOverlay(){
 
 async function aiLiveComment(ex, kg, reps){
   const prev = getPrevPerf(ex.id);
-  const prompt = `Trening na �ywo. �wiczenie: ${cleanText(ex.name)}. Seria ${ex.sets.length}: ${kg}kg � ${reps} powt. ${prev?'Poprzednio: '+prev:'Pierwsze podej�cie.'} Daj 1 kr�tkie zdanie motywacji/wskaz�wk�. Max 20 s��w. Po polsku.`;
+  const prompt = `Trening na żywo. Ćwiczenie: ${cleanText(ex.name)}. Seria ${ex.sets.length}: ${kg}kg x ${reps} powt. ${prev?'Poprzednio: '+prev:'Pierwsze podejście.'} Daj 1 krótkie zdanie motywacji lub wskazówki. Maksymalnie 20 słów. Po polsku.`;
   try{
     const r = await callAI(prompt,'Jesteś zwięzłym Pro Coachem siłowni. Odpowiadasz jednym zdaniem, po polsku, konkretnie i motywująco.');
     const el = document.getElementById('liveAiTxt');
@@ -1941,9 +1980,35 @@ function calcStreak(){
   state.streak=streak;
 }
 
+function renderAccountSummary(){
+  const user = getAuthUser();
+  const isLoggedIn = Boolean(user?.email);
+  const email = cleanText(user?.email, 'Konto opcjonalne');
+  const action = document.getElementById('accountAction');
+  if(action){
+    action.innerHTML = isLoggedIn
+      ? `<button onclick="logoutApp()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Wyloguj</button>`
+      : `<button onclick="window.location.href='/auth.html'" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Logowanie</button>`;
+  }
+  document.getElementById('accountSummary').innerHTML = `
+    <div style="padding:6px 16px 0;">
+      <div class="card" style="padding:14px 16px;border-radius:18px;background:rgba(17,17,24,.82);">
+        <div class="card-label">Konto</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-size:15px;font-weight:700;margin-bottom:2px;">${esc(email)}</div>
+            <div style="font-size:12px;color:var(--muted);">${isLoggedIn?'Dane treningowe zapisują się lokalnie tylko dla tego urządzenia.':'Możesz korzystać bez konta. Logowanie włączysz później po konfiguracji Firebase.'}</div>
+          </div>
+          <button class="btn btn-ghost" onclick="${isLoggedIn ? 'logoutApp()' : `window.location.href='/auth.html'`}" style="width:auto;padding:10px 14px;font-size:12px;flex-shrink:0;">${isLoggedIn ? 'Wyloguj' : 'Otwórz login'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderHome(){
   calcStreak();
   document.getElementById('streakBadge').textContent = state.streak>0?`🔥 ${state.streak} dni`:'Start!';
+  renderAccountSummary();
 
   // Week
   const days=['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
@@ -1965,16 +2030,16 @@ function renderHome(){
     document.getElementById('lastWorkoutCard').innerHTML=`
       <div class="card">
         <div class="card-label">Ostatni trening · ${new Date(last.startTime).toLocaleDateString('pl',{weekday:'long'})}</div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;">${esc(last.name)}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;line-height:1.05;margin-bottom:6px;">${esc(last.name)}</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">${last.exercises.length} ćwiczeń · ${dur} min · ${vol} kg obj.</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           ${last.exercises.slice(0,3).map(e=>{
             const topSet=e.sets.reduce((a,b)=>b.kg>a.kg?b:a,{kg:0,reps:0});
-            return topSet.kg?`<div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;">${topSet.kg}<span style="font-size:12px;color:var(--muted);">kg</span></div><div style="font-size:10px;color:var(--muted);">${shortLabel(e.name,2)}</div></div>`:''}).join('')}
+            return topSet.kg?`<div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;">${topSet.kg}<span style="font-size:12px;color:var(--muted);">kg</span></div><div style="font-size:10px;color:var(--muted);">${shortLabel(e.name,2)}</div></div>`:''}).join('')}
         </div>
         <div class="ai-block" style="margin-top:12px;">
           <div class="ai-label"><span class="ai-dot"></span>Pro Coach</div>
-          <p id="homeAiTxt" style="font-size:13px;line-height:1.5;">Analizuję Twój trening…</p>
+          <p id="homeAiTxt" style="font-size:13px;line-height:1.5;">Analizuję ostatni trening...</p>
         </div>
       </div>`;
     loadHomeAI(last);
@@ -1994,12 +2059,20 @@ function renderHome(){
 }
 
 async function loadHomeAI(last){
-  const summary = last.exercises.map(e=>`${cleanText(e.name)}: ${e.sets.map(s=>`${s.kg}kg�${s.reps}`).join(', ')}`).join('; ');
+  const summary = last.exercises.map(e=>`${cleanText(e.name)}: ${e.sets.map(s=>`${s.kg}kg x ${s.reps}`).join(', ')}`).join('; ');
+  const cacheKey = `${last.id || ''}-${last.endTime || last.startTime}-${summary}`;
+  if(aiInsightCache.homeKey === cacheKey && aiInsightCache.homeText){
+    const cachedEl=document.getElementById('homeAiTxt');
+    if(cachedEl) cachedEl.textContent=aiInsightCache.homeText;
+    return;
+  }
   try{
-    const r=await callAI(`Trening: ${cleanText(last.name)}. ${summary}. Daj kr�tk� analiz� i 1 konkretny tip na nast�pny trening. Max 50 s��w. Po polsku.`, 
-      'Jesteś Pro Coachem siłowni. Zwięzły, konkretny, motywujący. Po polsku.');
+    const r=await callAI(`Trening: ${cleanText(last.name)}. ${summary}. Daj jedną krótką obserwację i jedną konkretną wskazówkę na następny trening. Maksymalnie 30 słów, bez wstępu.`,
+      'Jesteś Pro Coachem siłowni. Odpowiadasz po polsku bardzo krótko, konkretnie i użytkowo. Maksymalnie 30 słów.');
     const el=document.getElementById('homeAiTxt');
     if(el) el.textContent=r;
+    aiInsightCache.homeKey = cacheKey;
+    aiInsightCache.homeText = r;
   }catch(e){
     const el=document.getElementById('homeAiTxt');
     if(el) el.textContent='Zaloguj kilka treningów aby AI mogło Cię przeanalizować.';
@@ -2179,12 +2252,20 @@ async function loadProgressAI(){
     if(max) prs.push(`${name}: ${max}kg`);
   });
   const injuries=state.injuries.filter(i=>i.active).map(i=>i.name).join(', ');
+  const cacheKey = `${totalWkts}|${prs.join('|')}|${injuries}`;
+  if(aiInsightCache.progressKey === cacheKey && aiInsightCache.progressText){
+    const cachedEl=document.getElementById('progAiTxt');
+    if(cachedEl) cachedEl.textContent=aiInsightCache.progressText;
+    return;
+  }
   try{
     const r=await callAI(
-      `Łącznie ${totalWkts} treningów. Rekordy: ${prs.join(', ')}. ${injuries?'Kontuzje: '+injuries+'.':''} Przeanalizuj progres i daj 2-3 konkretne wskazówki. Max 80 słów. Po polsku.`,
-      'Jesteś Pro Coachem siłowni. Analityczny, konkretny, po polsku.');
+      `Łącznie ${totalWkts} treningów. Rekordy: ${prs.join(', ')}. ${injuries?'Kontuzje: '+injuries+'. ':''}Oceń progres i daj 2 krótkie wskazówki. Maksymalnie 45 słów, bez lania wody.`,
+      'Jesteś Pro Coachem siłowni. Odpowiadasz po polsku krótko, analitycznie i praktycznie. Maksymalnie 45 słów.');
     const el=document.getElementById('progAiTxt');
     if(el) el.textContent=r;
+    aiInsightCache.progressKey = cacheKey;
+    aiInsightCache.progressText = r;
   }catch(e){}
 }
 
@@ -2193,7 +2274,7 @@ let aiMode='coach';
 // Historia konwersacji per tryb — AI pamięta wątek
 let chatHistory = {coach:[], injury:[], nutrition:[], plan:[]};
 // Limit wiadomości w historii (żeby nie przekroczyć kontekstu)
-const CHAT_HISTORY_LIMIT = 10; // max par user/assistant w historii
+const CHAT_HISTORY_LIMIT = 6; // max par user/assistant w historii
 
 function buildSystemContext(basePrompt){
   // Buduje system prompt wzbogacony o dane użytkownika z aplikacji
@@ -2205,7 +2286,7 @@ function buildSystemContext(basePrompt){
   let planInfo = '';
   if(plans.length){
     planInfo = plans.map(p=>{
-      const days = p.days.map(d=>`${d.dayName}: ${d.exercises.map(e=>`${cleanText(e.name)} ${e.sets||''}�${e.reps||''}`).join(', ')}`).join(' | ');
+      const days = p.days.map(d=>`${d.dayName}: ${d.exercises.map(e=>`${cleanText(e.name)} ${e.sets||''}x${e.reps||''}`).join(', ')}`).join(' | ');
       return `Plan "${p.planName}": ${days}`;
     }).join('\n');
   }
@@ -2231,23 +2312,23 @@ function buildSystemContext(basePrompt){
 
 const modeConfig={
   coach:{hint:'Twój Pro Coach analizuje progres i odpowiada na pytania o trening.',
-    sys:'Jesteś Pro Coachem siłowni w aplikacji ForgePro. Odpowiadasz po polsku, konkretnie, jak doświadczony trener. Max 120 słów.',
+    sys:'Jesteś Pro Coachem siłowni w aplikacji ForgePro. Odpowiadasz po polsku, konkretnie i krótko. Maksymalnie 70 słów, bez długiego wstępu.',
     chips:['Jak przebić plateau?','Kiedy deload?','Ile serii tygodniowo?','Ocen mój progres']},
   injury:{hint:'Opisz kontuzję — AI doradzi ćwiczenia rehab i modyfikacje treningu.',
-    sys:'Jesteś fizjoterapeutą sportowym w aplikacji ForgePro. Odpowiadasz po polsku profesjonalnie. Sugerujesz ćwiczenia rehab, ostrzegasz kiedy iść do lekarza. Max 150 słów.',
+    sys:'Jesteś fizjoterapeutą sportowym w aplikacji ForgePro. Odpowiadasz po polsku krótko i ostrożnie. Daj konkret, ostrzeż gdy trzeba iść do lekarza. Maksymalnie 80 słów.',
     chips:['Ból barku przy OHP','Ból kolana przy przysiadach','Jak trenować z kontuzją?','Kiedy wróć do pełnego treningu?']},
   nutrition:{hint:'Pytania o dietę, kalorie, białko i suplementy.',
-    sys:'Jesteś dietetykiem sportowym. Odpowiadasz po polsku, praktycznie. Max 120 słów.',
+    sys:'Jesteś dietetykiem sportowym. Odpowiadasz po polsku praktycznie i zwięźle. Maksymalnie 70 słów.',
     chips:['Ile białka dziennie?','Jaka dieta na masę?','Suplementy dla siłowni','Odżywka po treningu']},
   plan:{hint:'AI ułoży lub oceni Twój plan treningowy.',
-    sys:'Jesteś programistą treningowym. Odpowiadasz po polsku, profesjonalnie. Max 150 słów.',
+    sys:'Jesteś programistą treningowym. Odpowiadasz po polsku profesjonalnie, ale krótko. Maksymalnie 90 słów.',
     chips:['Ocen plan PPL','Ile dni na siłownię?','Push Pull Legs czy FBW?','Plan na siłę czy masę?']},
 };
 
 function initAI(){
   setMode(document.querySelector('.ttab.on')||document.querySelector('.ttab'), 'coach');
   if(document.getElementById('chatWrap').children.length===0){
-    addMsg('ai','Hej! Jestem Twoim Pro Coachem. Jak mogę Ci pomóc? 💪');
+    addMsg('ai','Jestem Twoim Pro Coachem. Pisz krótko, a ja odpowiem konkretnie.');
   }
 }
 
@@ -2311,7 +2392,9 @@ async function callAIWithHistory(systemPrompt, messages){
       messages: [
         {role: 'system', content: systemPrompt},
         ...messages
-      ]
+      ],
+      max_tokens: 220,
+      temperature: 0.5
     })
   });
   if(!r.ok) throw new Error('Błąd serwera: ' + r.status);
@@ -3152,6 +3235,7 @@ function parseReps(raw){
 }
 
 // ===================== INIT =====================
+clearLegacyLocalData();
 load();
 renderHome();
 initAI();

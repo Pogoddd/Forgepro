@@ -10,10 +10,32 @@ const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const REQUEST_TIMEOUT_MS = 30000;
 const MAX_MESSAGE_COUNT = 24;
 const MAX_MESSAGE_LENGTH = 4000;
+const FIREBASE_PUBLIC_CONFIG_KEYS = [
+  'FIREBASE_API_KEY',
+  'FIREBASE_AUTH_DOMAIN',
+  'FIREBASE_PROJECT_ID',
+  'FIREBASE_STORAGE_BUCKET',
+  'FIREBASE_MESSAGING_SENDER_ID',
+  'FIREBASE_APP_ID',
+];
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+function getFirebasePublicConfig() {
+  const config = {
+    apiKey: process.env.FIREBASE_API_KEY || '',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
+    projectId: process.env.FIREBASE_PROJECT_ID || '',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+    appId: process.env.FIREBASE_APP_ID || '',
+  };
+
+  const enabled = FIREBASE_PUBLIC_CONFIG_KEYS.every((key) => Boolean(process.env[key]));
+  return { enabled, firebase: config };
+}
 
 function corsOrigin(origin, callback) {
   if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
@@ -84,6 +106,13 @@ app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/api/config', (req, res) => {
+  res.json({
+    app: 'ForgePro',
+    auth: getFirebasePublicConfig(),
+  });
+});
+
 app.post('/api/ai', async (req, res) => {
   if (!GROQ_API_KEY) {
     return res.status(500).json({
@@ -127,11 +156,13 @@ app.post('/api/ai', async (req, res) => {
 });
 
 app.get('/health', (req, res) => {
+  const auth = getFirebasePublicConfig();
   res.json({
     status: 'ok',
     app: 'ForgePro',
     version: 'cleanup-1',
     ai: GROQ_API_KEY ? 'configured' : 'missing_api_key',
+    auth: auth.enabled ? 'configured' : 'missing_firebase_config',
     time: new Date().toISOString(),
   });
 });
