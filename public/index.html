@@ -714,10 +714,8 @@ select.inp option{background:var(--surface2);}
     <div style="padding:12px 14px 0;">
       <div id="logExerciseCards" style="display:flex;flex-direction:column;gap:12px;"></div>
 
-      <!-- AI live -->
-      <div class="ai-block" style="margin-top:12px;">
-        <div class="ai-label"><span class="ai-dot"></span>COACH NA ŻYWO</div>
-        <p id="liveAiTxt" style="font-size:13px;line-height:1.55;">Zapisz serię, a coach dorzuci krótką uwagę do wyniku.</p>
+      <div style="margin-top:12px;padding:0 2px 4px;">
+        <p id="liveAiTxt" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0;">Zapisz serię, a coach dorzuci krótką uwagę do wyniku.</p>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:10px;">
@@ -1217,7 +1215,6 @@ function startFromTemplate(id){
   startWorkoutTimer();
   goTo('workout');
   renderLiveWorkout();
-  switchWktTab('info');
 }
 
 function deleteTemplate(id){
@@ -1339,7 +1336,6 @@ function saveNewWorkoutAndStart(){
   startWorkoutTimer();
   goTo('workout');
   renderLiveWorkout();
-  switchWktTab('info');
 }
 
 function openPanel(id){
@@ -1631,8 +1627,7 @@ function countWorkoutSets(){
 }
 
 function getExerciseThumb(ex){
-  const ICONS = {'Klatka':'🫁','Plecy':'🔙','Nogi':'🦵','Barki':'💪','Biceps':'💪','Triceps':'💪','Core':'🔥','Custom':'⚡','—':'⚡'};
-  return ICONS[ex.cat] || '🏋️';
+  return (cleanText(ex.name).trim().charAt(0) || 'T').toUpperCase();
 }
 
 function renderLogTab(){
@@ -1648,26 +1643,25 @@ function renderLogTab(){
     const isCurrent = exIdx === state.currentExIdx;
     const thumb = getExerciseThumb(ex);
     return `
-      <div id="log-card-${exIdx}" style="background:var(--surface);border:1px solid ${isCurrent?'rgba(224,123,57,.4)':'var(--border)'};border-radius:24px;overflow:hidden;box-shadow:${isCurrent?'0 0 0 1px rgba(224,123,57,.08) inset':'none'};">
-        <div style="padding:18px 18px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;">
+      <div id="log-card-${exIdx}" style="background:var(--surface);border:1px solid ${isCurrent?'rgba(224,123,57,.35)':'var(--border)'};border-radius:22px;overflow:hidden;box-shadow:${isCurrent?'0 0 0 1px rgba(224,123,57,.06) inset':'none'};">
+        <div style="padding:16px 16px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
           <div style="display:flex;gap:14px;min-width:0;flex:1;">
-            <div style="width:66px;height:66px;border-radius:18px;background:linear-gradient(180deg,#3e474b,#323b40);border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${thumb}</div>
+            <div style="width:54px;height:54px;border-radius:16px;background:#394348;border:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#cfdbe2;flex-shrink:0;">${thumb}</div>
             <div style="min-width:0;flex:1;">
-              <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">${ex.plannedSets||3} serii · ${esc(ex.plannedReps||'8-12')} powt.</div>
-              <div style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;line-height:1.12;margin-bottom:4px;">${esc(ex.name)}</div>
-              <div style="font-size:12px;color:var(--muted);">${ex.rest?`Przerwa ${esc(ex.rest)}`:'Loguj kolejne serie inline'}</div>
+              <div style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;line-height:1.12;margin-bottom:4px;">${esc(ex.name)}</div>
+              <div style="font-size:12px;color:var(--muted);">${ex.plannedSets||3} serii · ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?` · ${esc(ex.rest)} przerwy`:''}</div>
             </div>
           </div>
-          <button onclick="goToLogEx(${exIdx})" style="width:54px;height:54px;border:none;border-radius:18px;background:${isCurrent?'rgba(224,123,57,.2)':'#6ca9c0'};color:${isCurrent?'var(--orange)':'#274250'};font-size:24px;font-weight:900;cursor:pointer;flex-shrink:0;">•••</button>
-        </div>
-        ${ex.notes?`<div style="padding:0 18px 14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:18px;padding:12px 14px;">
-            <div style="font-size:13px;color:var(--text);line-height:1.35;">${esc(ex.notes)}</div>
-            <div style="width:44px;height:44px;border-radius:14px;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#1c1c1c;font-size:18px;flex-shrink:0;">★</div>
+          <div style="flex-shrink:0;text-align:right;">
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${done?'var(--green)':isCurrent?'var(--orange)':'var(--muted)'};">${ex.sets.length}/${totalRows}</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">serii</div>
           </div>
+        </div>
+        ${ex.notes?`<div style="padding:0 16px 12px;">
+          <div style="font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;line-height:1.4;">${esc(ex.notes)}</div>
         </div>`:''}
-        <div style="border-top:1px solid var(--border);padding:12px 14px 16px;">
-          <div style="display:grid;grid-template-columns:62px 1.35fr 1fr 1fr 54px;gap:10px;padding:0 8px 10px;">
+        <div style="border-top:1px solid var(--border);padding:12px 12px 14px;">
+          <div style="display:grid;grid-template-columns:56px 1.35fr 1fr 1fr 48px;gap:8px;padding:0 6px 8px;">
             <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Seria</div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Poprzednio</div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;">kg</div>
@@ -1678,22 +1672,21 @@ function renderLogTab(){
             const loggedSet = ex.sets[rowIdx];
             const prevSet = prevSets[rowIdx] || prevSets[prevSets.length-1];
             const draft = getDraftValues(ex, rowIdx);
-            const isPendingRow = !loggedSet;
             return `
-              <div style="display:grid;grid-template-columns:62px 1.35fr 1fr 1fr 54px;gap:10px;align-items:center;padding:6px 8px;">
-                <button onclick="goToLogEx(${exIdx})" style="height:50px;border:none;border-radius:16px;background:${loggedSet?'#d7e6ee':'#c8dbe5'};color:#41515a;font:800 20px 'DM Sans',sans-serif;cursor:pointer;">${rowIdx+1}</button>
-                <div style="min-width:0;font-size:15px;color:${prevSet?'#d7d6de':'var(--muted)'};line-height:1.2;">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'-'}</div>
-                <input id="log-kg-${exIdx}-${rowIdx}" class="inp" type="number" step="2.5" min="0" inputmode="decimal" value="${loggedSet?loggedSet.kg:draft.kg}" ${loggedSet?'disabled':''} style="text-align:center;padding:12px 6px;border-radius:16px;font-size:22px;font-weight:800;background:#404b50;border-color:#667980;color:var(--text);${loggedSet?'opacity:.75;background:#425158;':''}">
-                <input id="log-reps-${exIdx}-${rowIdx}" class="inp" type="number" min="1" inputmode="numeric" value="${loggedSet?loggedSet.reps:draft.reps}" ${loggedSet?'disabled':''} style="text-align:center;padding:12px 6px;border-radius:16px;font-size:22px;font-weight:800;background:#404b50;border-color:#667980;color:var(--text);${loggedSet?'opacity:.75;background:#425158;':''}">
+              <div style="display:grid;grid-template-columns:56px 1.35fr 1fr 1fr 48px;gap:8px;align-items:center;padding:6px 6px;">
+                <div style="height:46px;border-radius:14px;background:#cfe0e8;color:#41515a;display:flex;align-items:center;justify-content:center;font:800 18px 'DM Sans',sans-serif;">${rowIdx+1}</div>
+                <div style="min-width:0;font-size:14px;color:${prevSet?'#d7d6de':'var(--muted)'};line-height:1.2;">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'-'}</div>
+                <input id="log-kg-${exIdx}-${rowIdx}" class="inp" type="number" step="2.5" min="0" inputmode="decimal" value="${loggedSet?loggedSet.kg:draft.kg}" ${loggedSet?'disabled':''} style="text-align:center;padding:11px 6px;border-radius:14px;font-size:18px;font-weight:800;background:#404b50;border-color:#667980;color:var(--text);${loggedSet?'opacity:.78;background:#47545a;':''}">
+                <input id="log-reps-${exIdx}-${rowIdx}" class="inp" type="number" min="1" inputmode="numeric" value="${loggedSet?loggedSet.reps:draft.reps}" ${loggedSet?'disabled':''} style="text-align:center;padding:11px 6px;border-radius:14px;font-size:18px;font-weight:800;background:#404b50;border-color:#667980;color:var(--text);${loggedSet?'opacity:.78;background:#47545a;':''}">
                 ${loggedSet
-                  ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" style="width:50px;height:50px;border:none;border-radius:50%;background:#3e474b;color:#1c1c1c;font-size:24px;font-weight:900;cursor:pointer;">✓</button>`
-                  : `<button onclick="logInlineSet(${exIdx},${rowIdx})" style="width:50px;height:50px;border:none;border-radius:50%;background:${isPendingRow?'#3e474b':'var(--surface2)'};color:#1c1c1c;font-size:24px;font-weight:900;cursor:pointer;">✓</button>`
+                  ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" title="Usuń serię" style="width:46px;height:46px;border:none;border-radius:50%;background:#4a555a;color:#dfe8eb;font-size:22px;font-weight:900;cursor:pointer;">✓</button>`
+                  : `<button onclick="logInlineSet(${exIdx},${rowIdx})" title="Zapisz serię" style="width:46px;height:46px;border:none;border-radius:50%;background:#6ca9c0;color:#203542;font-size:22px;font-weight:900;cursor:pointer;">✓</button>`
                 }
               </div>`;
           }).join('')}
-          <div style="display:flex;justify-content:center;gap:8px;padding:12px 8px 0;">
-            <button class="btn btn-ghost" onclick="addInlineSetRow(${exIdx})" style="width:auto;min-width:164px;padding:12px 18px;font-size:14px;background:#6ca9c0;color:#203542;border:none;">Dodaj Serię</button>
-            ${ex.sets.length ? `<button class="btn btn-ghost" onclick="copyLastLoggedSet(${exIdx})" style="width:auto;padding:12px 14px;font-size:13px;">Kopiuj</button>` : ''}
+          <div style="display:flex;justify-content:center;gap:8px;padding:12px 6px 0;">
+            <button class="btn btn-ghost" onclick="addInlineSetRow(${exIdx})" style="width:auto;min-width:156px;padding:11px 18px;font-size:14px;background:#6ca9c0;color:#203542;border:none;">Dodaj serię</button>
+            ${ex.sets.length ? `<button class="btn btn-ghost" onclick="copyLastLoggedSet(${exIdx})" style="width:auto;padding:11px 14px;font-size:13px;">Kopiuj</button>` : ''}
           </div>
         </div>
       </div>`;
@@ -1804,7 +1797,7 @@ function renderLiveWorkout(){
   const wkt = state.currentWorkout;
   if(!wkt) return;
   document.getElementById('liveWktName').textContent = wkt.name.toUpperCase().slice(0,24);
-  renderInfoTab();
+  switchWktTab('log');
 }
 
 function getPrevPerf(exId){
