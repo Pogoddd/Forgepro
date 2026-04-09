@@ -712,46 +712,14 @@ select.inp option{background:var(--surface2);}
   <!-- TAB: Logowanie (log a set) -->
   <div id="wktTabLog" style="display:none;padding-bottom:100px;">
     <div style="padding:12px 14px 0;">
-      <!-- Exercise selector pills -->
-      <div id="exPillRow" style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:8px;"></div>
-
-      <!-- Current exercise card -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:4px;">
-        <div style="padding:14px 16px 10px;">
-          <div id="logExName" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:2px;"></div>
-          <div id="logPlanInfo" style="font-size:12px;color:var(--orange);font-weight:600;margin-bottom:4px;"></div>
-          <div id="logPrevInfo" style="font-size:12px;color:var(--muted);"></div>
-        </div>
-
-        <!-- Series table -->
-        <div style="border-top:1px solid var(--border);">
-          <div style="display:grid;grid-template-columns:44px 1fr 1fr;padding:8px 16px;background:var(--surface2);">
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Seria</div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;">kg</div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;">Powt.</div>
-          </div>
-          <div id="logSetsTable"></div>
-        </div>
-
-        <!-- Input row -->
-        <div style="padding:14px 16px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div>
-            <label class="inp-label" style="text-align:center;display:block;">Ciężar (kg)</label>
-            <input class="inp" type="number" id="liveKg" value="0" step="2.5" min="0" inputmode="decimal"
-              style="font-size:32px;font-weight:800;text-align:center;padding:14px 8px;letter-spacing:-1px;border-radius:12px;">
-          </div>
-          <div>
-            <label class="inp-label" style="text-align:center;display:block;">Powtórzenia</label>
-            <input class="inp" type="number" id="liveReps" value="8" min="1" inputmode="numeric"
-              style="font-size:32px;font-weight:800;text-align:center;padding:14px 8px;letter-spacing:-1px;border-radius:12px;">
-          </div>
-        </div>
-      </div>
+      <div id="exPillRow" style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:10px;"></div>
+      <div id="logWorkoutSummary" style="margin-bottom:10px;"></div>
+      <div id="logExerciseCards" style="display:flex;flex-direction:column;gap:12px;"></div>
 
       <!-- AI live -->
       <div class="ai-block" style="margin-top:12px;">
         <div class="ai-label"><span class="ai-dot"></span>COACH NA ŻYWO</div>
-        <p id="liveAiTxt" style="font-size:13px;line-height:1.55;">Zacznij serię — AI przeanalizuje Twój wynik.</p>
+        <p id="liveAiTxt" style="font-size:13px;line-height:1.55;">Zapisz serię, a coach dorzuci krótką uwagę do wyniku.</p>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:10px;">
@@ -834,6 +802,31 @@ select.inp option{background:var(--surface2);}
     <div class="chart-wrap" id="chartBars"></div>
     <div class="chart-xlabels" id="chartLabels"></div>
     <div id="chartMeta" style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--muted);"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
+      <div>
+        <div class="card-label" style="margin-bottom:4px;">Waga ciała</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;">Dodawaj wagę codziennie i obserwuj realny trend, a nie pojedyncze skoki.</div>
+      </div>
+      <div id="weightTrendSummary" style="text-align:right;flex-shrink:0;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:12px;">
+      <div>
+        <label class="inp-label">Data</label>
+        <input class="inp" id="weightDateInput" type="date" onchange="renderWeightTracking(this.value)">
+      </div>
+      <div>
+        <label class="inp-label">Waga (kg)</label>
+        <input class="inp" id="weightValueInput" type="number" step="0.1" min="0" inputmode="decimal" placeholder="np. 82.4">
+      </div>
+      <button class="btn btn-primary" onclick="saveWeightEntry()" style="width:auto;padding:12px 16px;">Zapisz</button>
+    </div>
+    <div class="chart-wrap" id="weightChartBars"></div>
+    <div class="chart-xlabels" id="weightChartLabels"></div>
+    <div id="weightChartMeta" style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--muted);"></div>
+    <div id="weightRecentList" style="display:flex;flex-direction:column;gap:8px;margin-top:14px;"></div>
   </div>
 
   <div class="card">
@@ -988,7 +981,8 @@ function createDefaultState(){
     streak: 0,
     savedTemplates: [],
     importedPlans: [],
-    meta: {version: 2}
+    bodyWeight: [],
+    meta: {version: 3}
   };
 }
 
@@ -1031,7 +1025,8 @@ function migrateState(raw){
     streak: Number.isFinite(raw.streak) ? raw.streak : 0,
     savedTemplates: Array.isArray(raw.savedTemplates) ? raw.savedTemplates : [],
     importedPlans: Array.isArray(raw.importedPlans) ? raw.importedPlans : [],
-    meta: {version: 2}
+    bodyWeight: Array.isArray(raw.bodyWeight) ? raw.bodyWeight : [],
+    meta: {version: 3}
   };
 }
 
@@ -1520,20 +1515,13 @@ function updateMainActionBtn(tab){
           document.getElementById('tab-hist').classList.contains('active') ? 'hist' : 'info';
   }
   if(tab==='log'){
-    // Sprawdź czy to ostatnia seria ostatniego ćwiczenia
-    const ex = wkt?.exercises[state.currentExIdx];
+    const totalLogged = wkt ? wkt.exercises.reduce((sum, ex) => sum + ex.sets.length, 0) : 0;
+    const totalPlanned = wkt ? wkt.exercises.reduce((sum, ex) => sum + Math.max(ex.plannedSets || 3, ex.sets.length), 0) : 0;
     const allDone = wkt?.exercises.every(e=>e.sets.length>=(e.plannedSets||3));
-    if(allDone){
-      btn.textContent='🏁 Zakończ trening';
-      btn.className='btn btn-primary';
-      btn.style.background='var(--green)';
-      btn.onclick=confirmFinish;
-    } else {
-      btn.textContent='✓ Zapisz serię';
-      btn.style.background='';
-      btn.className='btn btn-primary';
-      btn.onclick=logSet;
-    }
+    btn.textContent = allDone ? `🏁 ${totalLogged}/${totalPlanned} Zakończ trening` : `${totalLogged}/${totalPlanned} Zapisz trening`;
+    btn.className='btn btn-primary';
+    btn.style.background = allDone ? 'var(--green)' : '';
+    btn.onclick=confirmFinish;
   } else if(tab==='info'){
     const allDone = wkt?.exercises.every(e=>e.sets.length>=(e.plannedSets||3));
     if(allDone){
@@ -1608,50 +1596,114 @@ function goToLogEx(idx){
   state.currentExIdx = idx;
   save();
   switchWktTab('log');
+  setTimeout(()=>{
+    document.getElementById(`log-card-${idx}`)?.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 50);
+}
+
+function getPrevExerciseSets(exId){
+  const history = state.workouts.filter(w=>w.done);
+  for(let i=history.length-1;i>=0;i--){
+    const ex = history[i].exercises.find(e=>e.id===exId);
+    if(ex && ex.sets.length>0 && !ex.skipped){
+      return ex.sets;
+    }
+  }
+  return [];
+}
+
+function getDraftValues(ex, rowIdx){
+  const prevSets = getPrevExerciseSets(ex.id);
+  const prevRow = prevSets[rowIdx] || prevSets[prevSets.length-1];
+  const lastLogged = ex.sets[ex.sets.length-1];
+  const plannedReps = cleanText(ex.plannedReps || '');
+  const repsMatch = plannedReps.match(/^(\d+)/);
+  return {
+    kg: lastLogged?.kg ?? prevRow?.kg ?? '',
+    reps: lastLogged?.reps ?? prevRow?.reps ?? (repsMatch ? repsMatch[1] : '')
+  };
+}
+
+function countWorkoutSets(){
+  const wkt = state.currentWorkout;
+  if(!wkt) return {logged:0, planned:0};
+  return {
+    logged: wkt.exercises.reduce((sum, ex) => sum + ex.sets.length, 0),
+    planned: wkt.exercises.reduce((sum, ex) => sum + Math.max(ex.plannedSets || 3, ex.sets.length), 0)
+  };
 }
 
 function renderLogTab(){
   const wkt = state.currentWorkout;
   if(!wkt) return;
-  const ex = wkt.exercises[state.currentExIdx];
-  if(!ex) return;
 
-  // Exercise pills
+  const counts = countWorkoutSets();
   document.getElementById('exPillRow').innerHTML = wkt.exercises.map((e,i)=>{
     const done = e.sets.length >= (e.plannedSets||3);
     const current = i === state.currentExIdx;
     return `<div class="ex-pill-btn ${current?'current':done?'done-pill':''}" onclick="goToLogEx(${i})">${shortLabel(e.name,2)}</div>`;
   }).join('');
 
-  // Exercise name + plan info
-  document.getElementById('logExName').textContent = ex.name;
-  document.getElementById('logPlanInfo').textContent = ex.plannedSets ? `Plan: ${ex.plannedSets}×${ex.plannedReps}${ex.rest?' · przerwa '+ex.rest:''}` : '';
-  const prev = getPrevPerf(ex.id);
-  document.getElementById('logPrevInfo').textContent = prev ? `Poprzednio: ${prev}` : 'Pierwsze podejście!';
-
-  // Series table
-  const totalSets = Math.max(ex.sets.length + 1, ex.plannedSets || 3);
-  document.getElementById('logSetsTable').innerHTML = Array.from({length:totalSets},(_,i)=>{
-    const set = ex.sets[i];
-    const isActive = i === ex.sets.length;
-    const isDone = !!set;
-    return `<div class="set-table-row ${isDone?'done-row':isActive?'active-row':''}" onclick="${isActive?'':''}">
-      <div class="set-num ${isDone?'done':isActive?'active':''}">${i+1}</div>
-      <div class="set-val ${isDone||isActive?'':'muted'}">${isDone?set.kg+' kg':isActive?'—':'? kg'}</div>
-      <div class="set-val ${isDone||isActive?'':'muted'}">${isDone?'× '+set.reps:isActive?'—':'× ?'}</div>
+  document.getElementById('logWorkoutSummary').innerHTML = `
+    <div class="card" style="padding:12px 14px;border-radius:18px;">
+      <div class="card-label">Logowanie treningu</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;">Wpisujesz serie bez przełączania ekranów. Każde ćwiczenie ma własną kartę i szybki zapis w wierszu.</div>
+        <div style="flex-shrink:0;text-align:right;">
+          <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;">${counts.logged}/${counts.planned}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">serii</div>
+        </div>
+      </div>
     </div>`;
-  }).join('');
 
-  // Pre-fill inputs
-  if(ex.sets.length > 0){
-    document.getElementById('liveKg').value = ex.sets[ex.sets.length-1].kg;
-    document.getElementById('liveReps').value = ex.sets[ex.sets.length-1].reps;
-  } else if(prev){
-    const m = prev.match(/(\d+)kg/);
-    if(m) document.getElementById('liveKg').value = m[1];
-    const repsM = (ex.plannedReps||'').match(/^(\d+)/);
-    if(repsM) document.getElementById('liveReps').value = repsM[1];
-  }
+  document.getElementById('logExerciseCards').innerHTML = wkt.exercises.map((ex, exIdx)=>{
+    const prevSets = getPrevExerciseSets(ex.id);
+    const totalRows = Math.max(ex.plannedSets || 3, ex.sets.length);
+    const done = ex.sets.length >= (ex.plannedSets||3);
+    const isCurrent = exIdx === state.currentExIdx;
+    return `
+      <div id="log-card-${exIdx}" style="background:${isCurrent?'rgba(224,123,57,.08)':'var(--surface)'};border:1px solid ${isCurrent?'rgba(224,123,57,.35)':'var(--border)'};border-radius:22px;overflow:hidden;box-shadow:${isCurrent?'0 0 0 1px rgba(224,123,57,.08) inset':'none'};">
+        <div style="padding:14px 16px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+          <div style="min-width:0;">
+            <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1;margin-bottom:4px;">${esc(ex.name)}</div>
+            <div style="font-size:12px;color:var(--orange);font-weight:700;margin-bottom:4px;">${ex.plannedSets||3} serii · ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?' · przerwa '+esc(ex.rest):''}</div>
+            <div style="font-size:12px;color:var(--muted);">${prevSets.length ? `Ostatnio: ${prevSets.map(s=>`${s.kg} kg x ${s.reps}`).join(', ')}` : 'Pierwsze podejście do tego ćwiczenia.'}</div>
+            ${ex.notes?`<div style="margin-top:8px;font-size:12px;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:8px 10px;">${esc(ex.notes)}</div>`:''}
+          </div>
+          <button onclick="goToLogEx(${exIdx})" style="background:${done?'var(--green-dim)':'var(--surface2)'};border:1px solid ${done?'rgba(28,201,124,.35)':'var(--border)'};color:${done?'var(--green)':'var(--muted)'};border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">${done?'Gotowe':'Aktywne'}</button>
+        </div>
+        <div style="border-top:1px solid var(--border);padding:10px 12px 12px;">
+          <div style="display:grid;grid-template-columns:58px 1.25fr 1fr 1fr 54px;gap:8px;padding:0 4px 8px;">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Seria</div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Poprzednio</div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;">kg</div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;">Powt.</div>
+            <div></div>
+          </div>
+          ${Array.from({length:totalRows},(_,rowIdx)=>{
+            const loggedSet = ex.sets[rowIdx];
+            const prevSet = prevSets[rowIdx] || prevSets[prevSets.length-1];
+            const draft = getDraftValues(ex, rowIdx);
+            const isPendingRow = !loggedSet;
+            return `
+              <div style="display:grid;grid-template-columns:58px 1.25fr 1fr 1fr 54px;gap:8px;align-items:center;padding:6px 4px;">
+                <button onclick="goToLogEx(${exIdx})" style="height:46px;border:none;border-radius:14px;background:${loggedSet?'var(--green-dim)':isCurrent?'rgba(224,123,57,.18)':'#d6e6ee'};color:${loggedSet?'var(--green)':'#394853'};font:800 20px 'DM Sans',sans-serif;cursor:pointer;">${rowIdx+1}</button>
+                <div style="min-width:0;font-size:13px;color:var(--muted);line-height:1.3;">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'-'}</div>
+                <input id="log-kg-${exIdx}-${rowIdx}" class="inp" type="number" step="2.5" min="0" inputmode="decimal" value="${loggedSet?loggedSet.kg:draft.kg}" ${loggedSet?'disabled':''} style="text-align:center;padding:12px 6px;border-radius:14px;font-size:20px;font-weight:800;${loggedSet?'opacity:.9;background:rgba(28,201,124,.08);':''}">
+                <input id="log-reps-${exIdx}-${rowIdx}" class="inp" type="number" min="1" inputmode="numeric" value="${loggedSet?loggedSet.reps:draft.reps}" ${loggedSet?'disabled':''} style="text-align:center;padding:12px 6px;border-radius:14px;font-size:20px;font-weight:800;${loggedSet?'opacity:.9;background:rgba(28,201,124,.08);':''}">
+                ${loggedSet
+                  ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" style="width:48px;height:48px;border:none;border-radius:14px;background:rgba(255,122,122,.12);color:#ff8b8b;font-size:20px;font-weight:800;cursor:pointer;">×</button>`
+                  : `<button onclick="logInlineSet(${exIdx},${rowIdx})" style="width:48px;height:48px;border:none;border-radius:14px;background:${isPendingRow?'#78b9d4':'var(--surface2)'};color:#1b2a34;font-size:22px;font-weight:900;cursor:pointer;">✓</button>`
+                }
+              </div>`;
+          }).join('')}
+          <div style="display:flex;gap:8px;padding:10px 4px 0;">
+            <button class="btn btn-ghost" onclick="addInlineSetRow(${exIdx})" style="flex:1;padding:12px;font-size:14px;">+ Dodaj serię</button>
+            ${ex.sets.length ? `<button class="btn btn-ghost" onclick="copyLastLoggedSet(${exIdx})" style="flex:1;padding:12px;font-size:14px;">Kopiuj ostatnią</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
   updateMainActionBtn('log');
 }
 
@@ -1769,19 +1821,25 @@ function getPrevPerf(exId){
   return null;
 }
 
-function logSet(){
-  const wkt = state.currentWorkout;
-  if(!wkt) return;
-  const ex = wkt.exercises[state.currentExIdx];
-  if(!ex) return;
-  const kg = parseFloat(document.getElementById('liveKg').value)||0;
-  const reps = parseInt(document.getElementById('liveReps').value)||0;
+function logExerciseSet(ex, kg, reps){
   if(reps===0) return;
   ex.sets.push({kg,reps,time:Date.now()});
   save();
   renderLogTab();
   renderInfoTab();
   aiLiveComment(ex, kg, reps);
+}
+
+function logInlineSet(exIdx, rowIdx){
+  const wkt = state.currentWorkout;
+  if(!wkt) return;
+  const ex = wkt.exercises[exIdx];
+  if(!ex || rowIdx !== ex.sets.length) return;
+  const kg = parseFloat(document.getElementById(`log-kg-${exIdx}-${rowIdx}`)?.value)||0;
+  const reps = parseInt(document.getElementById(`log-reps-${exIdx}-${rowIdx}`)?.value)||0;
+  if(reps===0) return;
+  state.currentExIdx = exIdx;
+  logExerciseSet(ex, kg, reps);
 
   // Sprawdź czy wszystkie serie dla tego ćwiczenia zalogowane
   const plannedSets = ex.plannedSets || 3;
@@ -1793,6 +1851,49 @@ function logSet(){
     const nextExName = wkt.exercises[state.currentExIdx + 1]?.name || '';
     startRest(150, nextExName);
   }
+}
+
+function logSet(){
+  const wkt = state.currentWorkout;
+  if(!wkt) return;
+  const ex = wkt.exercises[state.currentExIdx];
+  if(!ex) return;
+  logInlineSet(state.currentExIdx, ex.sets.length);
+}
+
+function addInlineSetRow(exIdx){
+  const wkt = state.currentWorkout;
+  const ex = wkt?.exercises[exIdx];
+  if(!ex) return;
+  ex.plannedSets = Math.max(ex.plannedSets || 3, ex.sets.length + 1);
+  state.currentExIdx = exIdx;
+  save();
+  renderLogTab();
+}
+
+function removeLoggedSet(exIdx, rowIdx){
+  const wkt = state.currentWorkout;
+  const ex = wkt?.exercises[exIdx];
+  if(!ex || rowIdx < 0 || rowIdx >= ex.sets.length) return;
+  ex.sets.splice(rowIdx, 1);
+  state.currentExIdx = exIdx;
+  save();
+  renderLogTab();
+  renderInfoTab();
+}
+
+function copyLastLoggedSet(exIdx){
+  const wkt = state.currentWorkout;
+  const ex = wkt?.exercises[exIdx];
+  if(!ex || !ex.sets.length) return;
+  const last = ex.sets[ex.sets.length-1];
+  addInlineSetRow(exIdx);
+  requestAnimationFrame(()=>{
+    const kgInput = document.getElementById(`log-kg-${exIdx}-${ex.sets.length}`);
+    const repsInput = document.getElementById(`log-reps-${exIdx}-${ex.sets.length}`);
+    if(kgInput) kgInput.value = last.kg;
+    if(repsInput) repsInput.value = last.reps;
+  });
 }
 
 function showNextExButton(){
@@ -1872,11 +1973,19 @@ async function aiLiveComment(ex, kg, reps){
 }
 
 function prevEx(){
-  if(state.currentExIdx>0){state.currentExIdx--;save();renderLogTab();}
+  if(state.currentExIdx>0){
+    state.currentExIdx--;
+    save();
+    renderLogTab();
+    document.getElementById(`log-card-${state.currentExIdx}`)?.scrollIntoView({behavior:'smooth', block:'center'});
+  }
 }
 function nextEx(){
   if(state.currentWorkout&&state.currentExIdx<state.currentWorkout.exercises.length-1){
-    state.currentExIdx++;save();renderLogTab();
+    state.currentExIdx++;
+    save();
+    renderLogTab();
+    document.getElementById(`log-card-${state.currentExIdx}`)?.scrollIntoView({behavior:'smooth', block:'center'});
   }
 }
 
@@ -2154,6 +2263,7 @@ function renderProgress(){
   sel.innerHTML=[...allEx].map(n=>`<option${n===prev?' selected':''}>${n}</option>`).join('');
   if(!sel.value&&allEx.size>0) sel.value=[...allEx][0];
   renderChart();
+  renderWeightTracking();
   renderPRs();
   renderInjuries();
   loadProgressAI();
@@ -2205,6 +2315,117 @@ function renderPRs(){
   `).join('');
 }
 
+function getTodayDateValue(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function getSortedWeightEntries(){
+  const latestByDate = new Map();
+  (state.bodyWeight || []).forEach(entry => {
+    const date = cleanText(entry.date);
+    const value = Number(entry.value);
+    if(!date || !Number.isFinite(value) || value <= 0) return;
+    latestByDate.set(date, {
+      date,
+      value: Math.round(value * 10) / 10,
+      updatedAt: Number(entry.updatedAt) || 0
+    });
+  });
+  return [...latestByDate.values()].sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function saveWeightEntry(){
+  const dateInput = document.getElementById('weightDateInput');
+  const valueInput = document.getElementById('weightValueInput');
+  if(!dateInput || !valueInput) return;
+  const date = cleanText(dateInput.value);
+  const value = Math.round((parseFloat(valueInput.value) || 0) * 10) / 10;
+  if(!date || !Number.isFinite(value) || value <= 0){
+    showNotice('Podaj poprawną datę i wagę.');
+    return;
+  }
+  state.bodyWeight = (state.bodyWeight || []).filter(entry => cleanText(entry.date) !== date);
+  state.bodyWeight.push({date, value, updatedAt: Date.now()});
+  save();
+  renderWeightTracking(date);
+}
+
+function deleteWeightEntry(date){
+  state.bodyWeight = (state.bodyWeight || []).filter(entry => cleanText(entry.date) !== date);
+  save();
+  renderWeightTracking();
+}
+
+function renderWeightTracking(selectedDate){
+  const dateInput = document.getElementById('weightDateInput');
+  const valueInput = document.getElementById('weightValueInput');
+  if(!dateInput || !valueInput) return;
+
+  const entries = getSortedWeightEntries();
+  const activeDate = selectedDate || dateInput.value || getTodayDateValue();
+  const existing = entries.find(entry => entry.date === activeDate);
+  dateInput.value = activeDate;
+  valueInput.value = existing ? existing.value : '';
+
+  const chartBars = document.getElementById('weightChartBars');
+  const chartLabels = document.getElementById('weightChartLabels');
+  const chartMeta = document.getElementById('weightChartMeta');
+  const trendSummary = document.getElementById('weightTrendSummary');
+  const recentList = document.getElementById('weightRecentList');
+
+  if(!entries.length){
+    chartBars.innerHTML = '<div style="color:var(--muted);font-size:13px;">Dodaj pierwszy pomiar wagi, żeby zobaczyć trend.</div>';
+    chartLabels.innerHTML = '';
+    chartMeta.innerHTML = '<span>Brak danych</span><span>Cel: regularność</span>';
+    trendSummary.innerHTML = '<div style="font-family:\'Syne\',sans-serif;font-size:24px;font-weight:800;">—</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">kg</div>';
+    recentList.innerHTML = '';
+    return;
+  }
+
+  const latestEntries = entries.slice(-14);
+  const minValue = Math.min(...latestEntries.map(entry => entry.value));
+  const maxValue = Math.max(...latestEntries.map(entry => entry.value));
+  const span = Math.max(maxValue - minValue, 0.5);
+  const firstValue = latestEntries[0].value;
+  const lastValue = latestEntries[latestEntries.length-1].value;
+  const diff = Math.round((lastValue - firstValue) * 10) / 10;
+  const weekEntries = latestEntries.slice(-7);
+  const weekAvg = weekEntries.reduce((sum, entry) => sum + entry.value, 0) / weekEntries.length;
+
+  trendSummary.innerHTML = `
+    <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;">${lastValue.toFixed(1)}</div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">aktualnie kg</div>`;
+
+  chartBars.innerHTML = latestEntries.map((entry, idx)=>{
+    const height = 30 + Math.round(((entry.value - minValue) / span) * 70);
+    const isLatest = idx === latestEntries.length - 1;
+    return `<div class="bar${isLatest?' hi':''}" style="height:${height}%;background:${isLatest?'linear-gradient(180deg,var(--orange),#f0a46d)':'linear-gradient(180deg,#78b9d4,#467487)'};" title="${entry.value.toFixed(1)} kg"></div>`;
+  }).join('');
+  chartLabels.innerHTML = latestEntries.map((entry, idx)=>`
+    <span>${idx===0 || idx===latestEntries.length-1 || idx===Math.floor(latestEntries.length/2) ? new Date(entry.date).toLocaleDateString('pl',{day:'numeric',month:'short'}) : ''}</span>
+  `).join('');
+  chartMeta.innerHTML = `
+    <span>Śr. 7 dni: ${weekAvg.toFixed(1)} kg</span>
+    <span style="color:${diff>0?'var(--orange)':diff<0?'var(--green)':'var(--muted)'}">${diff>0?'+':''}${diff.toFixed(1)} kg</span>
+  `;
+
+  recentList.innerHTML = `
+    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:2px;">Ostatnie wpisy</div>
+    ${entries.slice(-6).reverse().map(entry=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:14px;font-weight:700;">${entry.value.toFixed(1)} kg</div>
+          <div style="font-size:12px;color:var(--muted);">${new Date(entry.date).toLocaleDateString('pl',{day:'numeric',month:'long'})}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" onclick="renderWeightTracking('${entry.date}')" style="width:auto;padding:8px 12px;font-size:12px;">Edytuj</button>
+          <button class="btn btn-ghost" onclick="deleteWeightEntry('${entry.date}')" style="width:auto;padding:8px 12px;font-size:12px;color:#ff8b8b;border-color:rgba(255,122,122,.2);">Usuń</button>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
 function renderInjuries(){
   const list=document.getElementById('injuryList');
   if(!state.injuries.length){list.innerHTML='<div style="font-size:13px;color:var(--muted);">Brak zgłoszonych kontuzji.</div>';return;}
@@ -2252,7 +2473,11 @@ async function loadProgressAI(){
     if(max) prs.push(`${name}: ${max}kg`);
   });
   const injuries=state.injuries.filter(i=>i.active).map(i=>i.name).join(', ');
-  const cacheKey = `${totalWkts}|${prs.join('|')}|${injuries}`;
+  const weightEntries = getSortedWeightEntries();
+  const lastWeight = weightEntries.at(-1);
+  const firstWeight = weightEntries[0];
+  const weightSummary = lastWeight ? `Waga: ${lastWeight.value.toFixed(1)} kg${firstWeight ? ` (zmiana ${((lastWeight.value-firstWeight.value)>0?'+':'')}${(lastWeight.value-firstWeight.value).toFixed(1)} kg)` : ''}.` : '';
+  const cacheKey = `${totalWkts}|${prs.join('|')}|${injuries}|${weightSummary}`;
   if(aiInsightCache.progressKey === cacheKey && aiInsightCache.progressText){
     const cachedEl=document.getElementById('progAiTxt');
     if(cachedEl) cachedEl.textContent=aiInsightCache.progressText;
@@ -2260,7 +2485,7 @@ async function loadProgressAI(){
   }
   try{
     const r=await callAI(
-      `Łącznie ${totalWkts} treningów. Rekordy: ${prs.join(', ')}. ${injuries?'Kontuzje: '+injuries+'. ':''}Oceń progres i daj 2 krótkie wskazówki. Maksymalnie 45 słów, bez lania wody.`,
+      `Łącznie ${totalWkts} treningów. Rekordy: ${prs.join(', ')}. ${weightSummary} ${injuries?'Kontuzje: '+injuries+'. ':''}Oceń progres i daj 2 krótkie wskazówki. Maksymalnie 45 słów, bez lania wody.`,
       'Jesteś Pro Coachem siłowni. Odpowiadasz po polsku krótko, analitycznie i praktycznie. Maksymalnie 45 słów.');
     const el=document.getElementById('progAiTxt');
     if(el) el.textContent=r;
