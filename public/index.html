@@ -1680,15 +1680,38 @@ function getPrevExerciseSets(exId){
   return [];
 }
 
-function getDraftValues(ex, rowIdx){
-  const prevSets = getPrevExerciseSets(ex.id);
-  const prevRow = prevSets[rowIdx] || prevSets[prevSets.length-1];
-  const lastLogged = ex.sets[ex.sets.length-1];
+function getPrevExerciseSetsByName(exName){
+  const target = cleanText(exName).toLowerCase();
+  if(!target) return [];
+  const history = state.workouts.filter(w=>w.done);
+  for(let i=history.length-1;i>=0;i--){
+    const ex = history[i].exercises.find(e=>cleanText(e.name).toLowerCase()===target);
+    if(ex && ex.sets.length>0 && !ex.skipped){
+      return ex.sets;
+    }
+  }
+  return [];
+}
+
+function getExerciseHistorySets(ex){
+  const byId = getPrevExerciseSets(ex.id);
+  if(byId.length) return byId;
+  return getPrevExerciseSetsByName(ex.name);
+}
+
+function getPlannedRepsFallback(ex){
   const plannedReps = cleanText(ex.plannedReps || '');
   const repsMatch = plannedReps.match(/^(\d+)/);
+  return repsMatch ? repsMatch[1] : '';
+}
+
+function getDraftValues(ex, rowIdx){
+  const prevSets = getExerciseHistorySets(ex);
+  const prevRow = prevSets[rowIdx] || prevSets[prevSets.length-1];
+  const lastLogged = ex.sets[ex.sets.length-1];
   return {
     kg: lastLogged?.kg ?? prevRow?.kg ?? '',
-    reps: lastLogged?.reps ?? prevRow?.reps ?? (repsMatch ? repsMatch[1] : '')
+    reps: lastLogged?.reps ?? prevRow?.reps ?? getPlannedRepsFallback(ex)
   };
 }
 
@@ -1712,7 +1735,7 @@ function renderLogTab(){
   const counts = countWorkoutSets();
 
   document.getElementById('logExerciseCards').innerHTML = wkt.exercises.map((ex, exIdx)=>{
-    const prevSets = getPrevExerciseSets(ex.id);
+    const prevSets = getExerciseHistorySets(ex);
     const totalRows = Math.max(ex.plannedSets || 3, ex.sets.length);
     const isCurrent = exIdx === state.currentExIdx;
     const thumb = getExerciseThumb(ex);
@@ -1744,12 +1767,13 @@ function renderLogTab(){
             const loggedSet = ex.sets[rowIdx];
             const prevSet = prevSets[rowIdx] || prevSets[prevSets.length-1];
             const draft = getDraftValues(ex, rowIdx);
+            const repsFallback = getPlannedRepsFallback(ex);
             return `
               <div class="log-grid-row">
                 <div class="log-set-badge">${rowIdx+1}</div>
-                <div class="log-prev ${prevSet?'':'empty'}">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'-'}</div>
-                <input id="log-kg-${exIdx}-${rowIdx}" class="log-mini-inp" type="number" step="2.5" min="0" inputmode="decimal" value="${loggedSet?loggedSet.kg:draft.kg}" ${loggedSet?'disabled':''}>
-                <input id="log-reps-${exIdx}-${rowIdx}" class="log-mini-inp" type="number" min="1" inputmode="numeric" value="${loggedSet?loggedSet.reps:draft.reps}" ${loggedSet?'disabled':''}>
+                <div class="log-prev ${prevSet?'':'empty'}">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'Brak historii'}</div>
+                <input id="log-kg-${exIdx}-${rowIdx}" class="log-mini-inp" type="number" step="2.5" min="0" inputmode="decimal" placeholder="kg" value="${loggedSet?loggedSet.kg:draft.kg}" ${loggedSet?'disabled':''}>
+                <input id="log-reps-${exIdx}-${rowIdx}" class="log-mini-inp" type="number" min="1" inputmode="numeric" placeholder="${repsFallback || 'powt.'}" value="${loggedSet?loggedSet.reps:draft.reps}" ${loggedSet?'disabled':''}>
                 ${loggedSet
                   ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" title="Usuń serię" class="log-check done">✓</button>`
                   : `<button onclick="logInlineSet(${exIdx},${rowIdx})" title="Zapisz serię" class="log-check save">✓</button>`
@@ -1898,9 +1922,18 @@ function logInlineSet(exIdx, rowIdx){
   if(!wkt) return;
   const ex = wkt.exercises[exIdx];
   if(!ex || rowIdx !== ex.sets.length) return;
-  const kg = parseFloat(document.getElementById(`log-kg-${exIdx}-${rowIdx}`)?.value)||0;
-  const reps = parseInt(document.getElementById(`log-reps-${exIdx}-${rowIdx}`)?.value)||0;
-  if(reps===0) return;
+  const kgRaw = document.getElementById(`log-kg-${exIdx}-${rowIdx}`)?.value;
+  const repsRaw = document.getElementById(`log-reps-${exIdx}-${rowIdx}`)?.value;
+  const kg = parseFloat(kgRaw);
+  const reps = parseInt(repsRaw, 10);
+  if(!Number.isFinite(reps) || reps <= 0){
+    showNotice('Podaj liczbę powtórzeń dla tej serii.');
+    return;
+  }
+  if(!Number.isFinite(kg) || kg < 0){
+    showNotice('Podaj ciężar dla tej serii.');
+    return;
+  }
   state.currentExIdx = exIdx;
   logExerciseSet(ex, kg, reps);
 
