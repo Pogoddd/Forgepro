@@ -81,12 +81,13 @@ body{
 .nav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:430px;
-  background:rgba(17,17,24,0.95);
+  background:rgba(12,17,23,0.94);
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   border-top:1px solid var(--border);
   display:flex;justify-content:space-around;
-  padding:8px 0 22px;z-index:100;
+  padding:8px 0 20px;z-index:100;
+  box-shadow:0 -10px 28px rgba(0,0,0,.22);
 }
 .nav-btn{
   display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -95,24 +96,24 @@ body{
   letter-spacing:.08em;text-transform:uppercase;padding:4px 14px;
   transition:color .2s;position:relative;
 }
-.nav-btn.active{color:var(--orange);}
+.nav-btn.active{color:var(--text);}
 .nav-btn.active::after{
   content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
-  width:20px;height:2px;background:var(--orange);border-radius:2px;
+  width:18px;height:2px;background:var(--orange);border-radius:2px;
 }
 .nav-btn svg{width:22px;height:22px;stroke-width:1.8;}
 
 /* TOP BAR */
 .top-bar{
   display:flex;align-items:center;justify-content:space-between;
-  padding:52px 20px 16px;
+  padding:50px 18px 14px;
   background:rgba(11,16,21,0.92);
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   border-bottom:1px solid var(--border);
   position:sticky;top:0;z-index:50;
 }
-.logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.3px;}
+.logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-size:19px;font-weight:800;letter-spacing:-.3px;}
 .logo span{color:var(--orange);}
 .logo-mark{width:28px;height:28px;flex-shrink:0;}
 
@@ -120,9 +121,9 @@ body{
 .card{
   background:var(--surface);border:1px solid var(--border);
   border-radius:22px;padding:18px;margin:12px 16px 0;
-  box-shadow:0 18px 36px rgba(0,0,0,.18);
+  box-shadow:0 12px 28px rgba(0,0,0,.14);
 }
-.card-label{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.card-label{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#90a0ae;margin-bottom:12px;}
 
 /* AI BLOCK */
 .ai-block{background:var(--orange-dim);border:1px solid var(--orange-mid);border-radius:12px;padding:14px;margin-top:12px;}
@@ -156,11 +157,11 @@ body{
 select.inp option{background:var(--surface2);}
 
 /* WEEK DOTS */
-.week-row{display:flex;gap:4px;margin:14px 16px 0;}
+.week-row{display:flex;gap:6px;margin:12px 16px 0;}
 .day-pill{
-  flex:1;text-align:center;padding:10px 0 8px;border-radius:10px;
+  flex:1;text-align:center;padding:9px 0 7px;border-radius:12px;
   font-size:9px;font-weight:800;letter-spacing:.06em;
-  background:var(--surface);border:1px solid var(--border);color:var(--muted);
+  background:rgba(23,30,38,.8);border:1px solid var(--border);color:var(--muted);
   display:flex;flex-direction:column;align-items:center;gap:4px;
 }
 .day-pill .dp-dot{width:5px;height:5px;border-radius:50%;background:transparent;}
@@ -170,10 +171,10 @@ select.inp option{background:var(--surface2);}
 .day-pill.today{background:#1d2732;color:var(--text);border-color:#334253;}
 
 /* STAT ROW */
-.stat-row{display:flex;gap:8px;margin:14px 16px 0;}
+.stat-row{display:flex;gap:10px;margin:12px 16px 0;}
 .stat-box{
   flex:1;background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:16px 10px;text-align:center;
+  border-radius:18px;padding:15px 10px;text-align:center;
   position:relative;overflow:hidden;
 }
 .stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--orange);opacity:0;}
@@ -231,12 +232,12 @@ select.inp option{background:var(--surface2);}
 }
 .wkt-head-btn{
   background:var(--surface2);border:1px solid var(--border);color:var(--text);
-  font:700 11px 'DM Sans',sans-serif;border-radius:11px;padding:9px 11px;cursor:pointer;
+  font:700 11px 'DM Sans',sans-serif;border-radius:12px;padding:9px 11px;cursor:pointer;
   min-width:68px;
 }
 .wkt-head-btn.ghost{color:var(--muted);}
 .wkt-title-wrap{text-align:center;min-width:0;flex:1;padding:0 10px;}
-.wkt-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wkt-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .wkt-sub{font-size:10px;color:#7d7d92;margin-top:3px;}
 .wkt-tabs{
   display:flex;background:#151b22;border-radius:13px;padding:4px;
@@ -249,23 +250,23 @@ select.inp option{background:var(--surface2);}
   box-shadow:0 14px 28px rgba(0,0,0,.16);
 }
 .log-card.current{border-color:rgba(142,194,218,.30);box-shadow:0 0 0 1px rgba(142,194,218,.06) inset;}
-.log-card-head{padding:12px 13px 9px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.log-card-head{padding:12px 13px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .log-card-meta{display:flex;gap:9px;min-width:0;flex:1;}
 .log-thumb{
-  width:30px;height:30px;border-radius:10px;background:#3b4650;border:1px solid rgba(255,255,255,.04);
+  width:28px;height:28px;border-radius:9px;background:#3b4650;border:1px solid rgba(255,255,255,.04);
   display:flex;align-items:center;justify-content:center;color:#dde6eb;font-size:13px;font-weight:800;flex-shrink:0;
 }
-.log-card-name{font-size:14px;font-weight:700;line-height:1.18;margin-bottom:2px;}
+.log-card-name{font-size:13px;font-weight:700;line-height:1.2;margin-bottom:2px;}
 .log-card-plan{font-size:10px;color:#8593a0;}
 .log-card-count{text-align:right;flex-shrink:0;}
-.log-card-count strong{display:block;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--text);}
+.log-card-count strong{display:block;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--text);}
 .log-card-count span{font-size:8px;color:#8593a0;text-transform:uppercase;letter-spacing:.09em;}
 .log-note{
   margin:0 13px 9px;background:#151c23;border:1px solid #27323d;border-radius:12px;padding:7px 9px;
   font-size:10px;color:#8593a0;line-height:1.35;
 }
 .log-grid-head,.log-grid-row{
-  display:grid;grid-template-columns:36px 1.35fr 68px 68px 34px;gap:6px;align-items:center;
+  display:grid;grid-template-columns:36px 1.3fr 64px 64px 34px;gap:6px;align-items:center;
 }
 .log-grid-wrap{border-top:1px solid #24303b;padding:9px 9px 11px;}
 .log-grid-head{padding:0 1px 5px;}
@@ -273,26 +274,26 @@ select.inp option{background:var(--surface2);}
 .log-grid-head div:nth-child(3),.log-grid-head div:nth-child(4){text-align:center;}
 .log-grid-row{padding:3px 1px;}
 .log-set-badge{
-  height:34px;border-radius:10px;background:#d7e3e9;color:#46545d;display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:800;
+  height:32px;border-radius:10px;background:#d7e3e9;color:#46545d;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;
 }
-.log-prev{font-size:11px;color:#d1dae1;line-height:1.15;min-width:0;}
+.log-prev{font-size:10px;color:#d1dae1;line-height:1.15;min-width:0;}
 .log-prev.empty{color:#72808e;}
 .log-mini-inp{
-  width:100%;height:34px;background:#44515a;border:1px solid #697985;border-radius:10px;padding:7px 6px;
-  color:var(--text);font:700 14px 'DM Sans',sans-serif;text-align:center;outline:none;
+  width:100%;height:32px;background:#44515a;border:1px solid #697985;border-radius:10px;padding:7px 6px;
+  color:var(--text);font:700 13px 'DM Sans',sans-serif;text-align:center;outline:none;
 }
 .log-mini-inp:focus{border-color:rgba(142,194,218,.4);box-shadow:0 0 0 3px rgba(142,194,218,.08);}
 .log-mini-inp:disabled{opacity:.82;background:#4a5761;}
 .log-check{
-  width:34px;height:34px;border:1px solid #2c3742;border-radius:10px;cursor:pointer;font-size:14px;font-weight:900;
+  width:32px;height:32px;border:1px solid #2c3742;border-radius:10px;cursor:pointer;font-size:13px;font-weight:900;
   display:flex;align-items:center;justify-content:center;
 }
 .log-check.save{background:#141920;color:#72d39a;border-color:rgba(114,211,154,.25);}
 .log-check.done{background:rgba(114,211,154,.08);color:#72d39a;border-color:rgba(114,211,154,.28);}
 .log-row-actions{display:flex;justify-content:flex-start;gap:7px;padding:9px 1px 0;}
 .log-add-btn{
-  width:auto;min-width:112px;padding:9px 13px;border:none;border-radius:12px;background:#8ec2da;color:#203846;
+  width:auto;min-width:108px;padding:9px 13px;border:none;border-radius:12px;background:#8ec2da;color:#203846;
   font:700 12px 'DM Sans',sans-serif;cursor:pointer;
 }
 .log-copy-btn{
@@ -380,13 +381,13 @@ select.inp option{background:var(--surface2);}
 /* HISTORY ITEM */
 .hist-item{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:16px 18px;margin:10px 16px 0;
-  cursor:pointer;transition:border-color .15s;
+  border-radius:20px;padding:15px 16px;margin:10px 16px 0;
+  cursor:pointer;transition:border-color .15s, transform .15s;
 }
-.hist-item:active{border-color:var(--orange-mid);}
+.hist-item:active{border-color:var(--orange-mid);transform:scale(.99);}
 .hist-date{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
-.hist-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px;}
-.hist-meta{display:flex;gap:12px;}
+.hist-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;line-height:1.1;}
+.hist-meta{display:flex;gap:10px;flex-wrap:wrap;}
 .hist-meta span{font-size:12px;color:var(--muted);}
 .hist-meta strong{color:var(--text);font-weight:600;}
 
@@ -409,9 +410,9 @@ select.inp option{background:var(--surface2);}
 }
 
 /* PROGRESS CHART */
-.chart-wrap{display:flex;align-items:flex-end;gap:4px;height:70px;margin-top:12px;}
+.chart-wrap{display:flex;align-items:flex-end;gap:5px;height:78px;margin-top:12px;}
 .bar{
-  flex:1;border-radius:4px 4px 0 0;
+  flex:1;border-radius:8px 8px 0 0;
   background:var(--surface2);border:1px solid var(--border);
   transition:background .2s;
 }
@@ -467,16 +468,16 @@ select.inp option{background:var(--surface2);}
 /* WORKOUT TEMPLATE CARD */
 .wkt-template-card{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:16px;margin-bottom:10px;
-  cursor:pointer;transition:border-color .15s, background .15s;
+  border-radius:20px;padding:16px 16px 14px;margin-bottom:10px;
+  cursor:pointer;transition:border-color .15s, background .15s, transform .15s;
   position:relative;overflow:hidden;
 }
-.wkt-template-card:active{background:var(--surface2);border-color:var(--orange-mid);}
+.wkt-template-card:active{background:var(--surface2);border-color:var(--orange-mid);transform:scale(.992);}
 .wkt-template-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange);border-radius:0 2px 2px 0;}
-.wkt-template-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:3px;}
-.wkt-template-meta{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.wkt-template-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;line-height:1.1;margin-bottom:4px;}
+.wkt-template-meta{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.45;}
 .wkt-ex-chips{display:flex;gap:6px;flex-wrap:wrap;}
-.wkt-ex-chip{font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--muted);}
+.wkt-ex-chip{font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:4px 8px;color:var(--muted);}
 
 /* NEW WORKOUT EXERCISE ROW */
 .new-ex-row{
@@ -519,18 +520,18 @@ select.inp option{background:var(--surface2);}
 .idot.green{background:var(--green);}
 
 /* TOGGLE TABS */
-.ttabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:3px;margin:14px 16px 0;}
+.ttabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:4px;margin:14px 16px 0;}
 .ttab{
-  flex:1;padding:9px 6px;text-align:center;border-radius:9px;
-  font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);
+  flex:1;padding:9px 6px;text-align:center;border-radius:10px;
+  font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);
   transition:all .15s;letter-spacing:.01em;
 }
-.ttab.on{background:var(--orange);color:#fff;box-shadow:0 2px 8px rgba(224,123,57,.3);}
+.ttab.on{background:#202733;color:var(--text);box-shadow:none;}
 
 /* EMPTY STATE */
 .empty{text-align:center;padding:48px 24px;color:var(--muted);}
-.empty .eico{font-size:43px;margin-bottom:12px;}
-.empty p{font-size:14px;line-height:1.6;}
+.empty .eico{font-size:34px;margin-bottom:12px;opacity:.9;}
+.empty p{font-size:14px;line-height:1.7;max-width:260px;margin:0 auto;}
 
 ::-webkit-scrollbar{width:0;height:0;}
 
@@ -723,7 +724,7 @@ select.inp option{background:var(--surface2);}
 <div class="screen active" id="screen-home">
   <div class="top-bar">
     <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="28" height="28" rx="7" fill="#E07B39"/>
+  <rect width="28" height="28" rx="7" fill="var(--orange)"/>
   <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="13" cy="8" r="1.5" fill="white"/>
 </svg>Forge<span>Pro</span></div>
@@ -745,7 +746,7 @@ select.inp option{background:var(--surface2);}
     <div class="stat-box"><div class="stat-val" style="font-size:22px;color:var(--muted)">—</div><div class="stat-lbl">Martwy</div></div>
   </div>
 
-  <div style="padding:14px 16px 0;display:flex;gap:8px;">
+  <div style="padding:14px 16px 0;display:flex;gap:10px;">
     <button class="btn btn-primary" onclick="goTo('workouts')" style="flex:2;display:flex;align-items:center;justify-content:center;gap:8px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Nowy trening
@@ -756,10 +757,10 @@ select.inp option{background:var(--surface2);}
     </button>
   </div>
 
-  <div style="padding:8px 16px 20px;">
-    <button class="btn btn-ghost" onclick="openImportPanel()" style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:13px;padding:12px;">
+  <div style="padding:10px 16px 20px;">
+    <button class="btn btn-ghost" onclick="openImportPanel()" style="display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text);font-size:13px;padding:13px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      Importuj plan od trenera (Excel / PDF)
+      Importuj plan od trenera
     </button>
   </div>
 </div>
@@ -767,7 +768,7 @@ select.inp option{background:var(--surface2);}
 <!-- ======= SCREEN: LIVE WORKOUT ======= -->
 <div class="screen" id="screen-workout">
   <!-- Sticky header -->
-  <div class="top-bar" style="padding:52px 18px 0;flex-direction:column;gap:0;border-bottom:none;background:rgba(8,8,16,0.95);">
+  <div class="top-bar" style="padding:50px 18px 0;flex-direction:column;gap:0;border-bottom:none;background:rgba(11,16,21,0.94);">
     <div class="wkt-head">
       <button onclick="goTo('home')" class="wkt-head-btn">Powrót</button>
       <div class="wkt-title-wrap">
@@ -794,9 +795,9 @@ select.inp option{background:var(--surface2);}
     <div style="padding:12px 14px 0;">
       <div id="logExerciseCards" style="display:flex;flex-direction:column;gap:12px;"></div>
 
-      <div style="margin-top:12px;padding:0 2px 4px;">
-        <p id="liveAiTxt" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0;">Zapisz serię, a coach dorzuci krótką uwagę do wyniku.</p>
-      </div>
+    <div style="margin-top:12px;padding:0 2px 4px;">
+      <p id="liveAiTxt" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0;">Zapisz serię, a coach dorzuci krótką uwagę do wyniku.</p>
+    </div>
 
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="btn btn-ghost" onclick="startManualRest()" style="flex:1;">Odpoczynek</button>
@@ -819,7 +820,7 @@ select.inp option{background:var(--surface2);}
 <div class="screen" id="screen-ai">
   <div class="top-bar">
     <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="28" height="28" rx="7" fill="#E07B39"/>
+  <rect width="28" height="28" rx="7" fill="var(--orange)"/>
   <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="13" cy="8" r="1.5" fill="white"/>
 </svg>Forge<span>Pro</span></div>
@@ -850,7 +851,7 @@ select.inp option{background:var(--surface2);}
 <div class="screen" id="screen-history">
   <div class="top-bar">
     <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="28" height="28" rx="7" fill="#E07B39"/>
+  <rect width="28" height="28" rx="7" fill="var(--orange)"/>
   <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="13" cy="8" r="1.5" fill="white"/>
 </svg>Forge<span>Pro</span></div>
@@ -863,7 +864,7 @@ select.inp option{background:var(--surface2);}
 <div class="screen" id="screen-progress">
   <div class="top-bar">
     <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="28" height="28" rx="7" fill="#E07B39"/>
+  <rect width="28" height="28" rx="7" fill="var(--orange)"/>
   <path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="13" cy="8" r="1.5" fill="white"/>
 </svg>Forge<span>Pro</span></div>
@@ -927,13 +928,13 @@ select.inp option{background:var(--surface2);}
 <!-- ======= SCREEN: TRENINGI ======= -->
 <div class="screen" id="screen-workouts">
   <div class="top-bar">
-    <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="#E07B39"/><path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="8" r="1.5" fill="white"/></svg>Forge<span>Pro</span></div>
+    <div class="logo"><svg class="logo-mark" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="7" fill="var(--orange)"/><path d="M8 20L13 8L16 14L19 10L21 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="8" r="1.5" fill="white"/></svg>Forge<span>Pro</span></div>
     <div style="font-size:11px;color:var(--muted);font-weight:500;">Moje treningi</div>
   </div>
 
-  <div style="padding:14px 14px 0;display:flex;gap:8px;">
+  <div style="padding:14px 14px 0;display:flex;gap:10px;">
     <button class="btn btn-primary" onclick="goTo('new-workout')" style="flex:2;">+ Dodaj trening</button>
-    <button class="btn btn-ghost" onclick="openImportPanel()" style="flex:1;font-size:12px;padding:12px 8px;">📊 Excel</button>
+    <button class="btn btn-ghost" onclick="openImportPanel()" style="flex:1;font-size:12px;padding:12px 8px;">Import</button>
   </div>
 
   <div id="workoutsTemplateList" style="padding:12px 14px 90px;"></div>
@@ -941,7 +942,7 @@ select.inp option{background:var(--surface2);}
 
 <!-- ======= SCREEN: NOWY TRENING ======= -->
 <div class="screen" id="screen-new-workout">
-  <div class="top-bar" style="flex-direction:column;align-items:stretch;gap:10px;">
+  <div class="top-bar" style="flex-direction:column;align-items:stretch;gap:10px;padding-bottom:12px;">
     <div style="display:flex;align-items:center;gap:10px;">
       <button onclick="goTo('workouts')" style="background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:2px 6px 2px 0;line-height:1;">‹</button>
       <input id="newWktNameInput" class="inp" placeholder="Nazwa treningu (np. Push Day A)" style="flex:1;font-size:15px;font-weight:600;">
@@ -961,7 +962,7 @@ select.inp option{background:var(--surface2);}
 
   <div id="newWktExList" style="padding-bottom:90px;"></div>
 
-  <div style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:10px 14px;background:var(--bg);border-top:1px solid var(--border);">
+  <div style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:10px 14px;background:rgba(11,16,21,.96);border-top:1px solid var(--border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);">
     <button class="btn btn-ghost" onclick="addCustomExercise()" style="display:flex;align-items:center;justify-content:center;gap:6px;">
       + Dodaj własne ćwiczenie
     </button>
