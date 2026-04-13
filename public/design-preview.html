@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ForgePro Design Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#0b0b10;
+  --text:#f1f1f3;
+  --muted:#9e9eaf;
+  --border:#23232d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'DM Sans',sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,.05), transparent 26%),
+    linear-gradient(180deg,#0b0b10 0%, #08080d 100%);
+  color:var(--text);
+}
+.wrap{max-width:1280px;margin:0 auto;padding:32px 22px 72px;}
+.hero{margin-bottom:28px}
+.eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#c68655;
+  margin-bottom:10px;
+}
+h1{
+  margin:0 0 10px;
+  font-family:'Syne',sans-serif;
+  font-size:48px;
+  line-height:.95;
+  letter-spacing:-.05em;
+}
+.lead{
+  max-width:760px;
+  font-size:16px;
+  color:#b4b4c2;
+  line-height:1.7;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:20px;
+  align-items:start;
+}
+.concept{
+  border:1px solid var(--border);
+  border-radius:28px;
+  overflow:hidden;
+  background:#111118;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.concept-head{
+  padding:20px 22px 16px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.concept-name{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:8px;
+}
+.concept-name strong{
+  font-family:'Syne',sans-serif;
+  font-size:26px;
+  letter-spacing:-.04em;
+}
+.tag{
+  padding:7px 10px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+}
+.concept p{margin:0;color:#aeaec0;font-size:14px;line-height:1.6}
+.palette{
+  display:flex;gap:8px;padding:18px 22px 0;
+}
+.swatch{
+  flex:1;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.07);
+}
+.phone{
+  margin:18px;
+  border-radius:28px;
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+  min-height:650px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+.screen{
+  padding:18px 16px 22px;
+  min-height:650px;
+}
+.top{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;
+}
+.mini-btn{
+  border-radius:13px;padding:9px 12px;font-size:12px;font-weight:700;border:1px solid transparent;
+}
+.title{
+  text-align:center;flex:1;min-width:0;
+}
+.title strong{
+  display:block;font-family:'Syne',sans-serif;font-size:16px;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.title span{font-size:11px;opacity:.72}
+.tabs{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;
+}
+.tab{
+  text-align:center;padding:9px 8px;border-radius:12px;font-size:11px;font-weight:700;
+}
+.card{
+  border-radius:22px;padding:14px;margin-bottom:12px;border:1px solid transparent;
+}
+.card-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;
+}
+.mark{
+  width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;flex-shrink:0;
+}
+.card-title{
+  font-size:15px;font-weight:700;line-height:1.2;margin-bottom:3px;
+}
+.card-meta{
+  font-size:11px;line-height:1.45;
+}
+.count{
+  text-align:right;flex-shrink:0;
+}
+.count strong{
+  display:block;font-family:'Syne',sans-serif;font-size:16px;
+}
+.count span{
+  font-size:8px;letter-spacing:.08em;text-transform:uppercase;
+}
+.grid-head,.row{
+  display:grid;grid-template-columns:34px 1.4fr 68px 68px 34px;gap:6px;align-items:center;
+}
+.grid-head{
+  font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;
+}
+.set{
+  height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;
+}
+.prev{
+  font-size:11px;line-height:1.15;
+}
+.field{
+  height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;border:1px solid transparent;
+}
+.check{
+  height:34px;width:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;border:1px solid transparent;
+}
+.actions{
+  display:flex;gap:8px;margin-top:10px;
+}
+.action{
+  padding:10px 13px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid transparent;
+}
+.bottom{
+  margin-top:16px;padding:14px;border-radius:16px;text-align:center;font-size:13px;font-weight:800;letter-spacing:.08em;
+}
+
+.warm .concept-head{background:linear-gradient(180deg,rgba(198,134,85,.08),transparent)}
+.warm .tag{background:rgba(198,134,85,.12);color:#da995e;border:1px solid rgba(198,134,85,.22)}
+.warm .phone{background:#13100f}
+.warm .screen{background:linear-gradient(180deg,#151113 0%, #100f14 100%)}
+.warm .mini-btn{background:#19151a;color:#e8e3de;border-color:#2b2225}
+.warm .mini-btn.ghost{color:#8f7f78}
+.warm .tab{background:#19161b;color:#7e7471}
+.warm .tab.active{background:#262127;color:#f2ede8}
+.warm .card{background:#15131a;border-color:#33241f}
+.warm .mark{background:#394348;color:#e3ebef}
+.warm .card-meta,.warm .count span,.warm .grid-head,.warm .prev{color:#8f8792}
+.warm .count strong{color:#f0ece8}
+.warm .set{background:#dce7ed;color:#46535c}
+.warm .field{background:#414a51;border-color:#67737c;color:#f2f2f4}
+.warm .check{background:#18181f;border-color:rgba(218,153,94,.25);color:#da995e}
+.warm .action.primary{background:#89bad0;color:#1f3542}
+.warm .action.secondary{background:#19161b;border-color:#2a2328;color:#f0ece8}
+.warm .bottom{background:#d88952;color:#fff2e8}
+.warm .sw1{background:#100f14}.warm .sw2{background:#15131a}.warm .sw3{background:#da995e}.warm .sw4{background:#89bad0}
+
+.steel .concept-head{background:linear-gradient(180deg,rgba(97,132,154,.12),transparent)}
+.steel .tag{background:rgba(111,156,184,.12);color:#8cb8d2;border:1px solid rgba(111,156,184,.2)}
+.steel .phone{background:#0f1317}
+.steel .screen{background:linear-gradient(180deg,#10151a 0%, #0d1116 100%)}
+.steel .mini-btn{background:#151a21;color:#edf1f5;border-color:#242e38}
+.steel .mini-btn.ghost{color:#8291a0}
+.steel .tab{background:#141920;color:#7d8b98}
+.steel .tab.active{background:#202733;color:#eef4f8}
+.steel .card{background:#121820;border-color:#26313c}
+.steel .mark{background:#3b4650;color:#e4ebef}
+.steel .card-meta,.steel .count span,.steel .grid-head,.steel .prev{color:#8593a0}
+.steel .count strong{color:#eef4f7}
+.steel .set{background:#d7e3e9;color:#46545d}
+.steel .field{background:#44515a;border-color:#697985;color:#f0f3f6}
+.steel .check{background:#141920;border-color:rgba(114,211,154,.24);color:#72d39a}
+.steel .action.primary{background:#8ec2da;color:#203846}
+.steel .action.secondary{background:#141920;border-color:#28313b;color:#eef4f6}
+.steel .bottom{background:#7aaec8;color:#132f3e}
+.steel .sw1{background:#0d1116}.steel .sw2{background:#121820}.steel .sw3{background:#8ec2da}.steel .sw4{background:#72d39a}
+
+.mono .concept-head{background:linear-gradient(180deg,rgba(255,255,255,.05),transparent)}
+.mono .tag{background:rgba(255,255,255,.06);color:#d8d8e2;border:1px solid rgba(255,255,255,.08)}
+.mono .phone{background:#0f0f12}
+.mono .screen{background:linear-gradient(180deg,#101014 0%, #0d0d11 100%)}
+.mono .mini-btn{background:#17171d;color:#f3f3f6;border-color:#282832}
+.mono .mini-btn.ghost{color:#8a8a98}
+.mono .tab{background:#15151b;color:#828290}
+.mono .tab.active{background:#22222b;color:#f3f3f6}
+.mono .card{background:#111118;border-color:#23232c}
+.mono .mark{background:#3a3f47;color:#eef0f3}
+.mono .card-meta,.mono .count span,.mono .grid-head,.mono .prev{color:#8b8b98}
+.mono .count strong{color:#f3f3f6}
+.mono .set{background:#dfe7ec;color:#46535d}
+.mono .field{background:#434c53;border-color:#68747e;color:#f0f3f5}
+.mono .check{background:#17171d;border-color:#2b2b35;color:#f0f3f6}
+.mono .action.primary{background:#d9dde1;color:#20252a}
+.mono .action.secondary{background:#17171d;border-color:#282832;color:#f3f3f6}
+.mono .bottom{background:#f0f2f4;color:#181b1f}
+.mono .sw1{background:#0d0d11}.mono .sw2{background:#111118}.mono .sw3{background:#f0f2f4}.mono .sw4{background:#434c53}
+
+@media (max-width:760px){
+  .wrap{padding:22px 14px 52px}
+  h1{font-size:36px}
+}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">ForgePro Design Sprint</div>
+      <h1>3 mini kierunki wizualne do wyboru.</h1>
+      <p class="lead">Każdy wariant pokazuje ten sam fragment produktu: header treningu, karta ćwiczenia, tabela serii i główny przycisk. Dzięki temu możemy ocenić klimat, czytelność i “produktowość”, a nie tylko kolory.</p>
+    </section>
+
+    <section class="grid">
+      <article class="concept warm">
+        <div class="concept-head">
+          <div class="concept-name">
+            <strong>Warm Minimal</strong>
+            <span class="tag">Forge Fit</span>
+          </div>
+          <p>Ciepły, premium i najbardziej zgodny z nazwą ForgePro. Mniej neonów, więcej spokojnego kontrastu.</p>
+        </div>
+        <div class="palette">
+          <div class="swatch sw1"></div>
+          <div class="swatch sw2"></div>
+          <div class="swatch sw3"></div>
+          <div class="swatch sw4"></div>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="top">
+              <div class="mini-btn">Powrót</div>
+              <div class="title"><strong>Push A</strong><span>00:12</span></div>
+              <div class="mini-btn ghost">Koniec</div>
+            </div>
+            <div class="tabs">
+              <div class="tab">Przegląd</div>
+              <div class="tab active">Logowanie</div>
+              <div class="tab">Historia</div>
+            </div>
+            <div class="card">
+              <div class="card-head">
+                <div style="display:flex;gap:10px;min-width:0;flex:1;">
+                  <div class="mark">R</div>
+                  <div>
+                    <div class="card-title">Rumuński martwy ciąg</div>
+                    <div class="card-meta">3 serie · 6-8 powt. · 180 s przerwy</div>
+                  </div>
+                </div>
+                <div class="count"><strong>1/3</strong><span>serii</span></div>
+              </div>
+              <div class="grid-head">
+                <div>Seria</div><div>Poprzednio</div><div>kg</div><div>Powt.</div><div></div>
+              </div>
+              <div class="row">
+                <div class="set">1</div><div class="prev">100 kg x 8</div><div class="field">100</div><div class="field">8</div><div class="check">✓</div>
+              </div>
+              <div class="row" style="margin-top:6px;">
+                <div class="set">2</div><div class="prev" style="opacity:.65;">Brak historii</div><div class="field"></div><div class="field">8</div><div class="check">✓</div>
+              </div>
+              <div class="actions">
+                <div class="action primary">Dodaj serię</div>
+                <div class="action secondary">Powtórz</div>
+              </div>
+            </div>
+            <div class="bottom">2/11 ZAPISZ</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="concept steel">
+        <div class="concept-head">
+          <div class="concept-name">
+            <strong>Steel Minimal</strong>
+            <span class="tag">Clean Tech</span>
+          </div>
+          <p>Chłodniejszy, bardziej techniczny i bardzo czysty. Najbardziej “app-first”, najmniej siłowniowy.</p>
+        </div>
+        <div class="palette">
+          <div class="swatch sw1"></div>
+          <div class="swatch sw2"></div>
+          <div class="swatch sw3"></div>
+          <div class="swatch sw4"></div>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="top">
+              <div class="mini-btn">Powrót</div>
+              <div class="title"><strong>Push A</strong><span>00:12</span></div>
+              <div class="mini-btn ghost">Koniec</div>
+            </div>
+            <div class="tabs">
+              <div class="tab">Przegląd</div>
+              <div class="tab active">Logowanie</div>
+              <div class="tab">Historia</div>
+            </div>
+            <div class="card">
+              <div class="card-head">
+                <div style="display:flex;gap:10px;min-width:0;flex:1;">
+                  <div class="mark">W</div>
+                  <div>
+                    <div class="card-title">Wyciskanie sztangi</div>
+                    <div class="card-meta">2 serie · 6-8 + back off · 120 s</div>
+                  </div>
+                </div>
+                <div class="count"><strong>2/2</strong><span>serii</span></div>
+              </div>
+              <div class="grid-head">
+                <div>Seria</div><div>Poprzednio</div><div>kg</div><div>Powt.</div><div></div>
+              </div>
+              <div class="row">
+                <div class="set">1</div><div class="prev">95 kg x 6</div><div class="field">97,5</div><div class="field">6</div><div class="check">✓</div>
+              </div>
+              <div class="row" style="margin-top:6px;">
+                <div class="set">2</div><div class="prev">95 kg x 6</div><div class="field">97,5</div><div class="field">6</div><div class="check">✓</div>
+              </div>
+              <div class="actions">
+                <div class="action primary">Dodaj serię</div>
+                <div class="action secondary">Powtórz</div>
+              </div>
+            </div>
+            <div class="bottom">6/10 ZAPISZ</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="concept mono">
+        <div class="concept-head">
+          <div class="concept-name">
+            <strong>Mono Utility</strong>
+            <span class="tag">Quiet Pro</span>
+          </div>
+          <p>Najbardziej surowy i produktowy. Prawie bez koloru, bardzo spokojny i najmniej “efektowny”.</p>
+        </div>
+        <div class="palette">
+          <div class="swatch sw1"></div>
+          <div class="swatch sw2"></div>
+          <div class="swatch sw3"></div>
+          <div class="swatch sw4"></div>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="top">
+              <div class="mini-btn">Powrót</div>
+              <div class="title"><strong>Push A</strong><span>00:12</span></div>
+              <div class="mini-btn ghost">Koniec</div>
+            </div>
+            <div class="tabs">
+              <div class="tab">Przegląd</div>
+              <div class="tab active">Logowanie</div>
+              <div class="tab">Historia</div>
+            </div>
+            <div class="card">
+              <div class="card-head">
+                <div style="display:flex;gap:10px;min-width:0;flex:1;">
+                  <div class="mark">Ś</div>
+                  <div>
+                    <div class="card-title">Ściąganie drążka</div>
+                    <div class="card-meta">3 serie · 8-10 + back off · 120 s</div>
+                  </div>
+                </div>
+                <div class="count"><strong>0/3</strong><span>serii</span></div>
+              </div>
+              <div class="grid-head">
+                <div>Seria</div><div>Poprzednio</div><div>kg</div><div>Powt.</div><div></div>
+              </div>
+              <div class="row">
+                <div class="set">1</div><div class="prev" style="opacity:.62;">Brak historii</div><div class="field"></div><div class="field">8</div><div class="check">✓</div>
+              </div>
+              <div class="row" style="margin-top:6px;">
+                <div class="set">2</div><div class="prev" style="opacity:.62;">Brak historii</div><div class="field"></div><div class="field">8</div><div class="check">✓</div>
+              </div>
+              <div class="actions">
+                <div class="action primary">Dodaj serię</div>
+                <div class="action secondary">Powtórz</div>
+              </div>
+            </div>
+            <div class="bottom">3/12 ZAPISZ</div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </div>
+</body>
+</html>
