@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <style>
 :root {
@@ -602,6 +603,7 @@ select.inp option{background:var(--surface2);}
 <!-- Hidden file input -->
 <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
 <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handlePdfSelect(event)">
+<input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp,image/jpg" style="display:none" onchange="handleImageSelect(event)">
 
 <!-- ===== PANEL: Import Excel ===== -->
 <div class="panel" id="importPanel">
@@ -2683,9 +2685,24 @@ function showImportUpload(){
         </div>
       </div>
 
+      <div class="import-drop" style="margin-top:10px;"
+        onclick="document.getElementById('imageInput').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event,'image')">
+        <div style="display:flex;align-items:center;gap:14px;text-align:left;">
+          <div style="font-size:36px;flex-shrink:0;">📷</div>
+          <div>
+            <div style="font-weight:700;font-size:15px;margin-bottom:3px;">Zdjęcie planu</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.5;">Plan od trenera jako zdjęcie lub screen<br><span style="color:var(--dim);">.jpg .jpeg .png .webp</span></div>
+          </div>
+          <div style="margin-left:auto;color:var(--orange);font-size:20px;">›</div>
+        </div>
+      </div>
+
       <div style="margin-top:14px;padding:12px 14px;background:var(--orange-dim);border:1px solid var(--orange-mid);border-radius:10px;">
         <div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--orange);text-transform:uppercase;margin-bottom:5px;">✦ Jak to działa?</div>
-        <div style="font-size:12px;color:var(--text);line-height:1.6;">AI automatycznie odczyta plan — wykryje dni, ćwiczenia, serie i powtórzenia niezależnie od formatu.</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.6;">AI automatycznie odczyta plan — wykryje dni, ćwiczenia, serie i powtórzenia z Excela, PDF albo zdjęcia.</div>
       </div>
     </div>
   `;
@@ -2697,6 +2714,7 @@ function handleDrop(e, type){
   const file = e.dataTransfer.files[0];
   if(!file) return;
   if(type==='pdf') processPdfFile(file);
+  else if(type==='image') processImageFile(file);
   else processExcelFile(file);
 }
 
@@ -2709,6 +2727,12 @@ function handleFileSelect(e){
 function handlePdfSelect(e){
   const file = e.target.files[0];
   if(file) processPdfFile(file);
+  e.target.value = '';
+}
+
+function handleImageSelect(e){
+  const file = e.target.files[0];
+  if(file) processImageFile(file);
   e.target.value = '';
 }
 
@@ -2807,6 +2831,73 @@ async function processPdfFile(file){
 
   } catch(err) {
     showImportError('Błąd odczytu PDF: ' + err.message);
+  }
+}
+
+async function processImageFile(file){
+  updateImportStep(2);
+  document.getElementById('importContent').innerHTML = `
+    <div class="ai-parsing">
+      <div class="ai-spinner"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Czytam zdjęcie…</div>
+      <div style="font-size:13px;color:var(--muted);">OCR odczytuje tekst z obrazu</div>
+    </div>
+  `;
+
+  try{
+    if(typeof Tesseract === 'undefined'){
+      showImportError('OCR nie załadował się poprawnie. Odśwież stronę i spróbuj ponownie.');
+      return;
+    }
+
+    const result = await Tesseract.recognize(file, 'pol+eng');
+    const rawText = String(result?.data?.text || '');
+    const lines = rawText
+      .split(/\r?\n/)
+      .map(line => cleanText(line))
+      .filter(Boolean);
+    const fullText = lines.join('\n');
+
+    if(!fullText || fullText.length < 40){
+      showImportError('Nie udało się odczytać planu ze zdjęcia.<br><br><small>Spróbuj zrobić jaśniejsze i prostsze zdjęcie kartki lub screena.</small>');
+      return;
+    }
+
+    document.getElementById('importContent').innerHTML = `
+      <div class="ai-parsing">
+        <div class="ai-spinner"></div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Analizuję zdjęcie…</div>
+        <div style="font-size:13px;color:var(--muted);">Rozpoznaję dni, ćwiczenia, serie i powtórzenia</div>
+      </div>
+    `;
+
+    let plan = directParsePdfText(lines, fullText);
+
+    if(!plan || !plan.days || !plan.days.length){
+      try{
+        const truncated = fullText.slice(0, 6000);
+        const aiResult = await Promise.race([
+          callAI(truncated, AI_PARSE_PROMPT),
+          new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 30000))
+        ]);
+        const clean = aiResult.replace(/```json|```/g,'').trim();
+        const jsonMatch = clean.match(/\{[\s\S]*\}/);
+        if(jsonMatch) plan = JSON.parse(jsonMatch[0]);
+      }catch(err){
+        showImportError('Nie udało się przetworzyć zdjęcia planu.<br><br><small style="color:var(--dim);">Spróbuj prostego kadru bez cienia albo ustaw klucz AI w Railway.</small>');
+        return;
+      }
+    }
+
+    if(!plan || !plan.days || !plan.days.length){
+      showImportError('Nie znaleziono planu treningowego na zdjęciu.<br><br><small>Zadbaj, żeby na obrazie było widać nazwy ćwiczeń i serie.</small>');
+      return;
+    }
+
+    parsedPlan = plan;
+    showImportPreview(plan);
+  }catch(err){
+    showImportError('Błąd odczytu zdjęcia: ' + err.message);
   }
 }
 
