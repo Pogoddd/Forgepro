@@ -219,6 +219,86 @@ select.inp option{background:var(--surface2);}
 .rest-big{font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--orange);letter-spacing:2px;line-height:1;text-align:center;margin-bottom:16px;}
 .rest-ring{display:none;}
 
+/* LIVE WORKOUT CLEANUP */
+.wkt-shell{padding-bottom:118px;}
+.wkt-head{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;margin-bottom:10px;
+}
+.wkt-head-btn{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  font:700 12px 'DM Sans',sans-serif;border-radius:12px;padding:10px 12px;cursor:pointer;
+  min-width:72px;
+}
+.wkt-head-btn.ghost{color:var(--muted);}
+.wkt-title-wrap{text-align:center;min-width:0;flex:1;padding:0 10px;}
+.wkt-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wkt-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.wkt-tabs{
+  display:flex;background:var(--surface2);border-radius:12px;padding:3px;
+  width:100%;border:1px solid var(--border);
+}
+.wkt-tab{flex:1;text-align:center;padding:9px 8px;border-radius:9px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;}
+.wkt-tab.active{background:#2a2a35;color:var(--text);}
+.log-card{
+  background:#101017;border:1px solid #262632;border-radius:22px;overflow:hidden;
+}
+.log-card.current{border-color:rgba(224,123,57,.28);box-shadow:0 0 0 1px rgba(224,123,57,.05) inset;}
+.log-card-head{padding:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.log-card-meta{display:flex;gap:12px;min-width:0;flex:1;}
+.log-thumb{
+  width:42px;height:42px;border-radius:14px;background:#384247;border:1px solid rgba(255,255,255,.04);
+  display:flex;align-items:center;justify-content:center;color:#d8e1e5;font-size:18px;font-weight:800;flex-shrink:0;
+}
+.log-card-name{font-size:20px;font-weight:700;line-height:1.12;margin-bottom:4px;}
+.log-card-plan{font-size:12px;color:var(--muted);}
+.log-card-count{text-align:right;flex-shrink:0;}
+.log-card-count strong{display:block;font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text);}
+.log-card-count span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.log-note{
+  margin:0 16px 12px;background:#17171f;border:1px solid #252532;border-radius:14px;padding:10px 12px;
+  font-size:12px;color:var(--muted);line-height:1.4;
+}
+.log-grid-head,.log-grid-row{
+  display:grid;grid-template-columns:52px 1.3fr 82px 82px 44px;gap:8px;align-items:center;
+}
+.log-grid-wrap{border-top:1px solid var(--border);padding:12px 12px 14px;}
+.log-grid-head{padding:0 4px 8px;}
+.log-grid-head div{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.log-grid-head div:nth-child(3),.log-grid-head div:nth-child(4){text-align:center;}
+.log-grid-row{padding:6px 4px;}
+.log-set-badge{
+  height:42px;border-radius:14px;background:#d6e4eb;color:#41515a;display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:800;
+}
+.log-prev{font-size:14px;color:#d7d6de;line-height:1.2;min-width:0;}
+.log-prev.empty{color:var(--muted);}
+.log-mini-inp{
+  width:100%;background:#3d474d;border:1px solid #667980;border-radius:14px;padding:10px 6px;
+  color:var(--text);font:800 17px 'DM Sans',sans-serif;text-align:center;outline:none;
+}
+.log-mini-inp:disabled{opacity:.8;background:#49555b;}
+.log-check{
+  width:44px;height:44px;border:none;border-radius:50%;cursor:pointer;font-size:22px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+}
+.log-check.save{background:#77b6d0;color:#223844;}
+.log-check.done{background:#445157;color:#e3ecef;}
+.log-row-actions{display:flex;justify-content:center;gap:8px;padding:12px 4px 0;}
+.log-add-btn{
+  width:auto;min-width:150px;padding:11px 18px;border:none;border-radius:16px;background:#77b6d0;color:#203542;
+  font:700 14px 'DM Sans',sans-serif;cursor:pointer;
+}
+.log-copy-btn{
+  width:auto;padding:11px 14px;border-radius:16px;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  font:700 13px 'DM Sans',sans-serif;cursor:pointer;
+}
+.wkt-bottom{
+  position:fixed;bottom:72px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:10px 16px;
+  background:rgba(8,8,16,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);
+}
+.wkt-bottom .btn{box-shadow:none;border-radius:18px;font-size:15px;padding:16px;}
+
 /* SEARCH BAR */
 .search-bar{
   display:flex;align-items:center;gap:10px;
@@ -690,16 +770,16 @@ select.inp option{background:var(--surface2);}
 <div class="screen" id="screen-workout">
   <!-- Sticky header -->
   <div class="top-bar" style="padding:52px 18px 0;flex-direction:column;gap:0;border-bottom:none;background:rgba(8,8,16,0.95);">
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:12px;">
-      <button onclick="goTo('home')" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:18px;cursor:pointer;padding:6px 10px;border-radius:10px;line-height:1;">‹</button>
-      <div style="text-align:center;">
-        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;letter-spacing:.02em;" id="liveWktName">TRENING</div>
-        <div id="wktTimer" style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:.1em;text-transform:uppercase;">00:00</div>
+    <div class="wkt-head">
+      <button onclick="goTo('home')" class="wkt-head-btn">Powrót</button>
+      <div class="wkt-title-wrap">
+        <div class="wkt-title" id="liveWktName">TRENING</div>
+        <div class="wkt-sub" id="wktTimer">00:00</div>
       </div>
-      <button onclick="confirmFinish()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;padding:7px 12px;border-radius:10px;font-family:'DM Sans',sans-serif;">Zakończ</button>
+      <button onclick="confirmFinish()" class="wkt-head-btn ghost">Zakończ</button>
     </div>
     <!-- Tab bar -->
-    <div style="display:flex;background:var(--surface2);border-radius:12px;padding:3px;width:100%;margin-bottom:1px;border:1px solid var(--border);">
+    <div class="wkt-tabs">
       <div id="tab-info" class="wkt-tab active" onclick="switchWktTab('info')">Przegląd</div>
       <div id="tab-log" class="wkt-tab" onclick="switchWktTab('log')">Logowanie</div>
       <div id="tab-hist" class="wkt-tab" onclick="switchWktTab('hist')">Historia</div>
@@ -712,7 +792,7 @@ select.inp option{background:var(--surface2);}
   </div>
 
   <!-- TAB: Logowanie (log a set) -->
-  <div id="wktTabLog" style="display:none;padding-bottom:100px;">
+  <div id="wktTabLog" class="wkt-shell" style="display:none;">
     <div style="padding:12px 14px 0;">
       <div id="logExerciseCards" style="display:flex;flex-direction:column;gap:12px;"></div>
 
@@ -721,7 +801,7 @@ select.inp option{background:var(--surface2);}
       </div>
 
       <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn btn-ghost" onclick="startManualRest()" style="flex:1;">⏱ Odpoczynek</button>
+        <button class="btn btn-ghost" onclick="startManualRest()" style="flex:1;">Odpoczynek</button>
       </div>
     </div>
   </div>
@@ -732,7 +812,7 @@ select.inp option{background:var(--surface2);}
   </div>
 
   <!-- Fixed bottom bar -->
-  <div style="position:fixed;bottom:72px;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:10px 16px;background:rgba(8,8,16,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);">
+  <div class="wkt-bottom">
     <button class="btn btn-primary" id="mainActionBtn" onclick="confirmFinish()" style="font-size:16px;padding:17px;letter-spacing:.08em;">0/0 ZAPISZ</button>
   </div>
 </div>
@@ -1641,33 +1721,30 @@ function renderLogTab(){
   document.getElementById('logExerciseCards').innerHTML = wkt.exercises.map((ex, exIdx)=>{
     const prevSets = getPrevExerciseSets(ex.id);
     const totalRows = Math.max(ex.plannedSets || 3, ex.sets.length);
-    const done = ex.sets.length >= (ex.plannedSets||3);
     const isCurrent = exIdx === state.currentExIdx;
     const thumb = getExerciseThumb(ex);
     return `
-      <div id="log-card-${exIdx}" style="background:var(--surface);border:1px solid ${isCurrent?'rgba(224,123,57,.35)':'var(--border)'};border-radius:22px;overflow:hidden;box-shadow:${isCurrent?'0 0 0 1px rgba(224,123,57,.06) inset':'none'};">
-        <div style="padding:16px 16px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-          <div style="display:flex;gap:14px;min-width:0;flex:1;">
-            <div style="width:54px;height:54px;border-radius:16px;background:#394348;border:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#cfdbe2;flex-shrink:0;">${thumb}</div>
+      <div id="log-card-${exIdx}" class="log-card ${isCurrent?'current':''}">
+        <div class="log-card-head">
+          <div class="log-card-meta">
+            <div class="log-thumb">${thumb}</div>
             <div style="min-width:0;flex:1;">
-              <div style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;line-height:1.12;margin-bottom:4px;">${esc(ex.name)}</div>
-              <div style="font-size:12px;color:var(--muted);">${ex.plannedSets||3} serii · ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?` · ${esc(ex.rest)} przerwy`:''}</div>
+              <div class="log-card-name">${esc(ex.name)}</div>
+              <div class="log-card-plan">${ex.plannedSets||3} serii · ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?` · ${esc(ex.rest)} przerwy`:''}</div>
             </div>
           </div>
-          <div style="flex-shrink:0;text-align:right;">
-            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:${done?'var(--green)':isCurrent?'var(--orange)':'var(--muted)'};">${ex.sets.length}/${totalRows}</div>
-            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">serii</div>
+          <div class="log-card-count">
+            <strong>${ex.sets.length}/${totalRows}</strong>
+            <span>serii</span>
           </div>
         </div>
-        ${ex.notes?`<div style="padding:0 16px 12px;">
-          <div style="font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;line-height:1.4;">${esc(ex.notes)}</div>
-        </div>`:''}
-        <div style="border-top:1px solid var(--border);padding:12px 12px 14px;">
-          <div style="display:grid;grid-template-columns:56px 1.35fr 1fr 1fr 48px;gap:8px;padding:0 6px 8px;">
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Seria</div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Poprzednio</div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;">kg</div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center;">Powt.</div>
+        ${ex.notes?`<div class="log-note">${esc(ex.notes)}</div>`:''}
+        <div class="log-grid-wrap">
+          <div class="log-grid-head">
+            <div>Seria</div>
+            <div>Poprzednio</div>
+            <div>kg</div>
+            <div>Powt.</div>
             <div></div>
           </div>
           ${Array.from({length:totalRows},(_,rowIdx)=>{
@@ -1675,20 +1752,20 @@ function renderLogTab(){
             const prevSet = prevSets[rowIdx] || prevSets[prevSets.length-1];
             const draft = getDraftValues(ex, rowIdx);
             return `
-              <div style="display:grid;grid-template-columns:56px 1.35fr 1fr 1fr 48px;gap:8px;align-items:center;padding:6px 6px;">
-                <div style="height:46px;border-radius:14px;background:#cfe0e8;color:#41515a;display:flex;align-items:center;justify-content:center;font:800 18px 'DM Sans',sans-serif;">${rowIdx+1}</div>
-                <div style="min-width:0;font-size:14px;color:${prevSet?'#d7d6de':'var(--muted)'};line-height:1.2;">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'-'}</div>
-                <input id="log-kg-${exIdx}-${rowIdx}" class="inp" type="number" step="2.5" min="0" inputmode="decimal" value="${loggedSet?loggedSet.kg:draft.kg}" ${loggedSet?'disabled':''} style="text-align:center;padding:11px 6px;border-radius:14px;font-size:18px;font-weight:800;background:#404b50;border-color:#667980;color:var(--text);${loggedSet?'opacity:.78;background:#47545a;':''}">
-                <input id="log-reps-${exIdx}-${rowIdx}" class="inp" type="number" min="1" inputmode="numeric" value="${loggedSet?loggedSet.reps:draft.reps}" ${loggedSet?'disabled':''} style="text-align:center;padding:11px 6px;border-radius:14px;font-size:18px;font-weight:800;background:#404b50;border-color:#667980;color:var(--text);${loggedSet?'opacity:.78;background:#47545a;':''}">
+              <div class="log-grid-row">
+                <div class="log-set-badge">${rowIdx+1}</div>
+                <div class="log-prev ${prevSet?'':'empty'}">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'-'}</div>
+                <input id="log-kg-${exIdx}-${rowIdx}" class="log-mini-inp" type="number" step="2.5" min="0" inputmode="decimal" value="${loggedSet?loggedSet.kg:draft.kg}" ${loggedSet?'disabled':''}>
+                <input id="log-reps-${exIdx}-${rowIdx}" class="log-mini-inp" type="number" min="1" inputmode="numeric" value="${loggedSet?loggedSet.reps:draft.reps}" ${loggedSet?'disabled':''}>
                 ${loggedSet
-                  ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" title="Usuń serię" style="width:46px;height:46px;border:none;border-radius:50%;background:#4a555a;color:#dfe8eb;font-size:22px;font-weight:900;cursor:pointer;">✓</button>`
-                  : `<button onclick="logInlineSet(${exIdx},${rowIdx})" title="Zapisz serię" style="width:46px;height:46px;border:none;border-radius:50%;background:#6ca9c0;color:#203542;font-size:22px;font-weight:900;cursor:pointer;">✓</button>`
+                  ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" title="Usuń serię" class="log-check done">✓</button>`
+                  : `<button onclick="logInlineSet(${exIdx},${rowIdx})" title="Zapisz serię" class="log-check save">✓</button>`
                 }
               </div>`;
           }).join('')}
-          <div style="display:flex;justify-content:center;gap:8px;padding:12px 6px 0;">
-            <button class="btn btn-ghost" onclick="addInlineSetRow(${exIdx})" style="width:auto;min-width:156px;padding:11px 18px;font-size:14px;background:#6ca9c0;color:#203542;border:none;">Dodaj serię</button>
-            ${ex.sets.length ? `<button class="btn btn-ghost" onclick="copyLastLoggedSet(${exIdx})" style="width:auto;padding:11px 14px;font-size:13px;">Kopiuj</button>` : ''}
+          <div class="log-row-actions">
+            <button class="log-add-btn" onclick="addInlineSetRow(${exIdx})">Dodaj serię</button>
+            ${ex.sets.length ? `<button class="log-copy-btn" onclick="copyLastLoggedSet(${exIdx})">Kopiuj</button>` : ''}
           </div>
         </div>
       </div>`;
