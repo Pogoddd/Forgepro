@@ -99,6 +99,7 @@
 <input type="file" id="xlsxInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
 <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handlePdfSelect(event)">
 <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp,image/jpg" style="display:none" onchange="handleImageSelect(event)">
+<input type="file" id="backupInput" accept="application/json,.json" style="display:none" onchange="handleBackupImport(event)">
 
 <!-- ===== PANEL: Import Excel ===== -->
 <div class="panel" id="importPanel">
@@ -553,6 +554,65 @@ function load(){
   }
 }
 
+function createBackupPayload(){
+  return {
+    exportedAt: Date.now(),
+    app: 'ForgePro',
+    schemaVersion: 3,
+    data: migrateState(state)
+  };
+}
+
+function exportAppBackup(){
+  try{
+    const payload = createBackupPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `forgepro-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showNotice('Backup został zapisany na urządzeniu.');
+  }catch(err){
+    console.warn('Nie udało się wyeksportować backupu:', err);
+    showNotice('Nie udało się utworzyć backupu.');
+  }
+}
+
+function openBackupImport(){
+  const input = document.getElementById('backupInput');
+  if(!input) return;
+  input.value = '';
+  input.click();
+}
+
+async function handleBackupImport(event){
+  const file = event?.target?.files?.[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const imported = parsed?.data ?? parsed;
+    const nextState = migrateState(imported);
+    if(!nextState || !Array.isArray(nextState.workouts) || !Array.isArray(nextState.savedTemplates)){
+      showNotice('Ten plik nie wygląda jak poprawny backup ForgePro.');
+      return;
+    }
+    state = nextState;
+    save();
+    renderHome();
+    updateActiveWorkoutBanner();
+    showNotice('Backup został zaimportowany.');
+  }catch(err){
+    console.warn('Nie udało się zaimportować backupu:', err);
+    showNotice('Nie udało się wczytać backupu.');
+  }
+}
+
 function getAuthUser(){
   try{
     const raw = localStorage.getItem(AUTH_USER_KEY);
@@ -1004,6 +1064,10 @@ function renderAccountSummary(){
             <div style="font-size:12px;color:var(--muted);">${isLoggedIn?'Dane treningowe zapisują się lokalnie tylko dla tego urządzenia.':'Możesz korzystać bez konta. Logowanie włączysz później po konfiguracji Firebase.'}</div>
           </div>
           <button class="btn btn-ghost" onclick="${isLoggedIn ? 'logoutApp()' : `window.location.href='/auth.html'`}" style="width:auto;padding:10px 14px;font-size:12px;flex-shrink:0;">${isLoggedIn ? 'Wyloguj' : 'Otwórz login'}</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <button class="btn btn-ghost" onclick="exportAppBackup()" style="width:auto;padding:10px 14px;font-size:12px;">Eksport backupu</button>
+          <button class="btn btn-ghost" onclick="openBackupImport()" style="width:auto;padding:10px 14px;font-size:12px;">Import backupu</button>
         </div>
       </div>
     </div>`;
