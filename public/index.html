@@ -412,6 +412,7 @@
   </button>
 </nav>
 
+<script src="/scripts/app-state.js"></script>
 <script src="/scripts/workout-live.js"></script>
 <script>
 // ===================== DATA =====================
@@ -461,187 +462,6 @@ const EXERCISES_DB = [
 ];
 
 const CATS = ['Wszystkie','Klatka','Plecy','Nogi','Barki','Biceps','Triceps','Core'];
-const STORAGE_KEY = 'forgepro_v3';
-const RESET_STORAGE_KEYS = ['forgepro_v1', 'forgepro_v2'];
-const AUTH_SESSION_KEY = 'forgepro_auth_session_v1';
-const AUTH_USER_KEY = 'forgepro_auth_user_v1';
-
-// ===================== STATE =====================
-function createDefaultState(){
-  return {
-    workouts: [],
-    currentWorkout: null,
-    currentExIdx: 0,
-    injuries: [],
-    streak: 0,
-    savedTemplates: [],
-    importedPlans: [],
-    bodyWeight: [],
-    meta: {version: 3}
-  };
-}
-
-let state = createDefaultState();
-const aiInsightCache = {homeKey:'', homeText:'', progressKey:'', progressText:''};
-
-function cleanText(value, fallback=''){
-  if(value===null || value===undefined) return fallback;
-  const text = String(value).replace(/[\u0000-\u001F\u007F]/g,' ').replace(/\s+/g,' ').trim();
-  return text || fallback;
-}
-
-function esc(value){
-  return cleanText(value).replace(/[&<>"']/g, ch => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[ch]));
-}
-
-function shortLabel(value, words=2){
-  return esc(cleanText(value).split(' ').slice(0,words).join(' '));
-}
-
-function encodeInlineArg(value){
-  return encodeURIComponent(cleanText(value)).replace(/'/g,'%27');
-}
-
-function migrateState(raw){
-  if(!raw || typeof raw !== 'object' || Array.isArray(raw)) return createDefaultState();
-  return {
-    ...createDefaultState(),
-    ...raw,
-    workouts: Array.isArray(raw.workouts) ? raw.workouts : [],
-    currentWorkout: raw.currentWorkout && typeof raw.currentWorkout === 'object' ? raw.currentWorkout : null,
-    currentExIdx: Number.isInteger(raw.currentExIdx) ? raw.currentExIdx : 0,
-    injuries: Array.isArray(raw.injuries) ? raw.injuries : [],
-    streak: Number.isFinite(raw.streak) ? raw.streak : 0,
-    savedTemplates: Array.isArray(raw.savedTemplates) ? raw.savedTemplates : [],
-    importedPlans: Array.isArray(raw.importedPlans) ? raw.importedPlans : [],
-    bodyWeight: Array.isArray(raw.bodyWeight) ? raw.bodyWeight : [],
-    meta: {version: 3}
-  };
-}
-
-function withAbandonedCurrentWorkout(){
-  if(!state.currentWorkout || state.currentWorkout.done) return true;
-  if(!confirm('Masz aktywny trening: "' + cleanText(state.currentWorkout.name,'Trening') + '"\n\nCzy chcesz go porzucic i zaczac nowy?')) return false;
-  state.currentWorkout.done = true;
-  state.currentWorkout.abandoned = true;
-  state.currentWorkout.endTime = Date.now();
-  state.workouts.push(state.currentWorkout);
-  state.currentWorkout = null;
-  clearInterval(wktTimerInterval);
-  save();
-  return true;
-}
-
-// ===================== LOCALSTORAGE =====================
-function save(){localStorage.setItem(STORAGE_KEY, JSON.stringify(state));}
-function clearLegacyLocalData(){
-  RESET_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
-}
-function load(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(!raw) return;
-  try{
-    state = migrateState(JSON.parse(raw));
-  }catch(err){
-    console.warn('Nie udalo sie wczytac danych aplikacji:', err);
-    state = createDefaultState();
-  }
-}
-
-function createBackupPayload(){
-  return {
-    exportedAt: Date.now(),
-    app: 'ForgePro',
-    schemaVersion: 3,
-    data: migrateState(state)
-  };
-}
-
-function exportAppBackup(){
-  try{
-    const payload = createBackupPayload();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const stamp = new Date().toISOString().slice(0,10);
-    a.href = url;
-    a.download = `forgepro-backup-${stamp}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    showNotice('Backup został zapisany na urządzeniu.');
-  }catch(err){
-    console.warn('Nie udało się wyeksportować backupu:', err);
-    showNotice('Nie udało się utworzyć backupu.');
-  }
-}
-
-function openBackupImport(){
-  const input = document.getElementById('backupInput');
-  if(!input) return;
-  input.value = '';
-  input.click();
-}
-
-async function handleBackupImport(event){
-  const file = event?.target?.files?.[0];
-  if(!file) return;
-  try{
-    const text = await file.text();
-    const parsed = JSON.parse(text);
-    const imported = parsed?.data ?? parsed;
-    const nextState = migrateState(imported);
-    if(!nextState || !Array.isArray(nextState.workouts) || !Array.isArray(nextState.savedTemplates)){
-      showNotice('Ten plik nie wygląda jak poprawny backup ForgePro.');
-      return;
-    }
-    state = nextState;
-    save();
-    renderHome();
-    updateActiveWorkoutBanner();
-    showNotice('Backup został zaimportowany.');
-  }catch(err){
-    console.warn('Nie udało się zaimportować backupu:', err);
-    showNotice('Nie udało się wczytać backupu.');
-  }
-}
-
-function getAuthUser(){
-  try{
-    const raw = localStorage.getItem(AUTH_USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }catch(err){
-    return null;
-  }
-}
-
-function hasAuthSession(){
-  try{
-    const raw = localStorage.getItem(AUTH_SESSION_KEY);
-    if(!raw) return false;
-    const parsed = JSON.parse(raw);
-    return Boolean(parsed && parsed.uid);
-  }catch(err){
-    return false;
-  }
-}
-
-function requireAuthSession(){
-  return hasAuthSession();
-}
-
-function logoutApp(){
-  localStorage.removeItem(AUTH_SESSION_KEY);
-  localStorage.removeItem(AUTH_USER_KEY);
-  window.location.replace('/auth.html?logout=1');
-}
 
 // ===================== NAVIGATION =====================
 const screens = ['home','workout','ai','history','progress','workouts','new-workout'];
@@ -1048,6 +868,8 @@ function renderAccountSummary(){
   const user = getAuthUser();
   const isLoggedIn = Boolean(user?.email);
   const email = cleanText(user?.email, 'Konto opcjonalne');
+  const workoutCount = state.workouts.filter(w=>w.done && !w.abandoned).length;
+  const templateCount = (state.savedTemplates || []).length + (state.importedPlans || []).reduce((sum, plan) => sum + (plan.days?.length || 0), 0);
   const action = document.getElementById('accountAction');
   if(action){
     action.innerHTML = isLoggedIn
@@ -1064,6 +886,20 @@ function renderAccountSummary(){
             <div style="font-size:12px;color:var(--muted);">${isLoggedIn?'Dane treningowe zapisują się lokalnie tylko dla tego urządzenia.':'Możesz korzystać bez konta. Logowanie włączysz później po konfiguracji Firebase.'}</div>
           </div>
           <button class="btn btn-ghost" onclick="${isLoggedIn ? 'logoutApp()' : `window.location.href='/auth.html'`}" style="width:auto;padding:10px 14px;font-size:12px;flex-shrink:0;">${isLoggedIn ? 'Wyloguj' : 'Otwórz login'}</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;min-width:110px;">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Treningi</div>
+            <div style="font-size:16px;font-weight:700;">${workoutCount}</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;min-width:110px;">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Plany</div>
+            <div style="font-size:16px;font-weight:700;">${templateCount}</div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;min-width:140px;">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Tryb danych</div>
+            <div style="font-size:16px;font-weight:700;">${isLoggedIn ? 'Konto + lokalnie' : 'Lokalnie'}</div>
+          </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
           <button class="btn btn-ghost" onclick="exportAppBackup()" style="width:auto;padding:10px 14px;font-size:12px;">Eksport backupu</button>
