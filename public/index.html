@@ -412,6 +412,7 @@
   </button>
 </nav>
 
+<script src="/scripts/auth-shared.js"></script>
 <script src="/scripts/app-state.js"></script>
 <script src="/scripts/workout-live.js"></script>
 <script>
@@ -465,6 +466,22 @@ const CATS = ['Wszystkie','Klatka','Plecy','Nogi','Barki','Biceps','Triceps','Co
 
 // ===================== NAVIGATION =====================
 const screens = ['home','workout','ai','history','progress','workouts','new-workout'];
+function getCurrentScreenName(){
+  const active = document.querySelector('.screen.active');
+  if(!active?.id) return 'home';
+  return active.id.replace('screen-','');
+}
+
+function getAuthReturnPath(){
+  const screen = getCurrentScreenName();
+  return screen && screen !== 'home' ? `/?screen=${encodeURIComponent(screen)}` : '/';
+}
+
+function goToAuth(){
+  const url = window.ForgeAuth?.buildAuthUrl?.(getAuthReturnPath()) || '/auth.html';
+  window.location.href = url;
+}
+
 function goTo(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -867,14 +884,15 @@ function calcStreak(){
 function renderAccountSummary(){
   const user = getAuthUser();
   const isLoggedIn = Boolean(user?.email);
-  const email = cleanText(user?.email, 'Konto opcjonalne');
+  const primaryLabel = cleanText(user?.displayName || user?.email, 'Konto opcjonalne');
+  const providerLabel = user?.provider === 'google.com' ? 'Google' : isLoggedIn ? 'Email' : 'Gość';
   const workoutCount = state.workouts.filter(w=>w.done && !w.abandoned).length;
   const templateCount = (state.savedTemplates || []).length + (state.importedPlans || []).reduce((sum, plan) => sum + (plan.days?.length || 0), 0);
   const action = document.getElementById('accountAction');
   if(action){
     action.innerHTML = isLoggedIn
       ? `<button onclick="logoutApp()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Wyloguj</button>`
-      : `<button onclick="window.location.href='/auth.html'" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Logowanie</button>`;
+      : `<button onclick="goToAuth()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Logowanie</button>`;
   }
   document.getElementById('accountSummary').innerHTML = `
     <div style="padding:6px 16px 0;">
@@ -882,10 +900,10 @@ function renderAccountSummary(){
         <div class="card-label">Konto</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <div>
-            <div style="font-size:15px;font-weight:700;margin-bottom:2px;">${esc(email)}</div>
-            <div style="font-size:12px;color:var(--muted);">${isLoggedIn?'Dane treningowe zapisują się lokalnie tylko dla tego urządzenia.':'Możesz korzystać bez konta. Logowanie włączysz później po konfiguracji Firebase.'}</div>
+            <div style="font-size:15px;font-weight:700;margin-bottom:2px;">${esc(primaryLabel)}</div>
+            <div style="font-size:12px;color:var(--muted);">${isLoggedIn?`Sesja aktywna · ${providerLabel}${user?.emailVerified ? ' · email potwierdzony' : ''}`:'Możesz korzystać bez konta. Logowanie włączysz później po konfiguracji Firebase.'}</div>
           </div>
-          <button class="btn btn-ghost" onclick="${isLoggedIn ? 'logoutApp()' : `window.location.href='/auth.html'`}" style="width:auto;padding:10px 14px;font-size:12px;flex-shrink:0;">${isLoggedIn ? 'Wyloguj' : 'Otwórz login'}</button>
+          <button class="btn btn-ghost" onclick="${isLoggedIn ? 'logoutApp()' : 'goToAuth()'}" style="width:auto;padding:10px 14px;font-size:12px;flex-shrink:0;">${isLoggedIn ? 'Wyloguj' : 'Otwórz login'}</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
           <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;min-width:110px;">
@@ -2349,6 +2367,12 @@ load();
 renderHome();
 initAI();
 updateActiveWorkoutBanner();
+
+const bootParams = new URLSearchParams(window.location.search);
+const bootScreen = bootParams.get('screen');
+if(bootScreen && screens.includes(bootScreen)){
+  goTo(bootScreen);
+}
 
 // If workout was in progress (e.g. page refresh), resume
 if(state.currentWorkout&&!state.currentWorkout.done){

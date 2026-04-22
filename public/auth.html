@@ -120,6 +120,7 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
       <p class="lead">Uprościłem flow: najpierw konto, potem trening. Po zalogowaniu wracasz prosto do ForgePro.</p>
 
       <div id="authNotice" class="notice"></div>
+      <div id="sessionCard" class="notice" style="display:none;"></div>
 
       <div class="tabs">
         <button class="tab active" id="loginTab" type="button">Logowanie</button>
@@ -149,12 +150,18 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
         <button class="link-btn" id="resetBtn" type="button">Reset hasła</button>
       </div>
 
+      <div class="row" style="margin-top:10px;">
+        <button class="link-btn" id="guestBtn" type="button">Wróć bez logowania</button>
+        <button class="link-btn" id="continueBtn" type="button" style="display:none;">Kontynuuj jako zalogowany</button>
+      </div>
+
       <div class="meta">
         Jeśli auth nie jest jeszcze skonfigurowany w Railway, ten ekran pokaże Ci jasny komunikat zamiast udawać, że logowanie działa.
       </div>
     </section>
   </div>
 
+  <script src="/scripts/auth-shared.js"></script>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import {
@@ -162,16 +169,17 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
       GoogleAuthProvider,
       createUserWithEmailAndPassword,
       onAuthStateChanged,
+      sendEmailVerification,
       sendPasswordResetEmail,
       signInWithEmailAndPassword,
+      signInWithRedirect,
+      getRedirectResult,
       signInWithPopup,
       signOut,
     } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-    const AUTH_SESSION_KEY = 'forgepro_auth_session_v1';
-    const AUTH_USER_KEY = 'forgepro_auth_user_v1';
-
     const authNotice = document.getElementById('authNotice');
+    const sessionCard = document.getElementById('sessionCard');
     const authForm = document.getElementById('authForm');
     const emailInput = document.getElementById('emailInput');
     const passwordInput = document.getElementById('passwordInput');
@@ -179,8 +187,11 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
     const googleBtn = document.getElementById('googleBtn');
     const modeSwitchBtn = document.getElementById('modeSwitchBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const guestBtn = document.getElementById('guestBtn');
+    const continueBtn = document.getElementById('continueBtn');
     const loginTab = document.getElementById('loginTab');
     const registerTab = document.getElementById('registerTab');
+    const redirectTarget = window.ForgeAuth.getRedirectTarget();
 
     let isRegisterMode = false;
     let authEnabled = false;
@@ -195,6 +206,22 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
     function clearNotice() {
       authNotice.textContent = '';
       authNotice.className = 'notice';
+    }
+
+    function setSessionCard(user) {
+      if (!user) {
+        sessionCard.style.display = 'none';
+        sessionCard.textContent = '';
+        continueBtn.style.display = 'none';
+        return;
+      }
+
+      const label = user.displayName || user.email || 'Zalogowany użytkownik';
+      const provider = user.provider === 'google.com' ? 'Google' : 'Email';
+      sessionCard.innerHTML = `<strong style="display:block;margin-bottom:4px;">Aktywna sesja</strong>${label}<br><span style="color:var(--muted);font-size:12px;">Provider: ${provider}${user.emailVerified ? ' · email potwierdzony' : ''}</span>`;
+      sessionCard.className = 'notice show warn';
+      sessionCard.style.display = 'block';
+      continueBtn.style.display = 'inline';
     }
 
     function setLoading(isLoading, label) {
@@ -221,22 +248,21 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
     }
 
     function saveSession(user) {
-      const payload = {
-        uid: user.uid,
-        email: user.email || '',
-        ts: Date.now(),
-      };
-      localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(payload));
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(payload));
+      const payload = window.ForgeAuth.saveAuthSession(user);
+      setSessionCard(payload);
     }
 
     function clearSession() {
-      localStorage.removeItem(AUTH_SESSION_KEY);
-      localStorage.removeItem(AUTH_USER_KEY);
+      window.ForgeAuth.clearAuthSession();
+      setSessionCard(null);
     }
 
     function goToApp() {
-      window.location.replace('/');
+      window.location.replace(redirectTarget || '/');
+    }
+
+    function isMobileLike() {
+      return window.matchMedia('(max-width: 768px)').matches || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     }
 
     function mapAuthError(error) {
@@ -248,6 +274,7 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
         'auth/invalid-credential': 'Dane logowania są nieprawidłowe.',
         'auth/weak-password': 'Hasło jest za słabe. Użyj minimum 6 znaków.',
         'auth/popup-closed-by-user': 'Logowanie zostało anulowane.',
+        'auth/account-exists-with-different-credential': 'To konto istnieje już inną metodą logowania.',
         'auth/network-request-failed': 'Brak połączenia z internetem.',
       };
       return messages[error.code] || 'Nie udało się zalogować. Spróbuj ponownie.';
@@ -274,6 +301,15 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
         auth = getAuth(app);
         googleProvider = new GoogleAuthProvider();
 
+        try {
+          const redirectResult = await getRedirectResult(auth);
+          if (redirectResult?.user) {
+            saveSession(redirectResult.user);
+          }
+        } catch (error) {
+          setNotice(mapAuthError(error), 'error');
+        }
+
         if (new URLSearchParams(window.location.search).get('logout') === '1') {
           await signOut(auth).catch(() => {});
           clearSession();
@@ -291,6 +327,7 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
           goToApp();
         });
 
+        setSessionCard(window.ForgeAuth.getStoredAuthUser());
         setLoading(false);
       } catch (error) {
         clearSession();
@@ -314,7 +351,11 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
       setLoading(true, isRegisterMode ? 'Tworzenie konta' : 'Logowanie');
       try {
         if (isRegisterMode) {
-          await createUserWithEmailAndPassword(auth, email, password);
+          const credentials = await createUserWithEmailAndPassword(auth, email, password);
+          if (credentials?.user && !credentials.user.emailVerified) {
+            await sendEmailVerification(credentials.user).catch(() => {});
+            setNotice('Konto utworzone. Wysłaliśmy też mail z potwierdzeniem adresu.', 'warn');
+          }
         } else {
           await signInWithEmailAndPassword(auth, email, password);
         }
@@ -329,6 +370,10 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
       clearNotice();
       setLoading(true, 'Logowanie');
       try {
+        if (isMobileLike()) {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        }
         await signInWithPopup(auth, googleProvider);
       } catch (error) {
         setNotice(mapAuthError(error), 'error');
@@ -359,6 +404,8 @@ h1{margin:0 0 10px;font-family:'Syne',sans-serif;font-size:36px;line-height:.95;
     modeSwitchBtn.addEventListener('click', () => setMode(!isRegisterMode));
     loginTab.addEventListener('click', () => setMode(false));
     registerTab.addEventListener('click', () => setMode(true));
+    guestBtn.addEventListener('click', () => goToApp());
+    continueBtn.addEventListener('click', () => goToApp());
 
     setMode(false);
     bootAuth();

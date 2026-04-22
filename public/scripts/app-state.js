@@ -1,8 +1,5 @@
 const STORAGE_KEY = 'forgepro_v3';
 const RESET_STORAGE_KEYS = ['forgepro_v1', 'forgepro_v2'];
-const AUTH_SESSION_KEY = 'forgepro_auth_session_v1';
-const AUTH_USER_KEY = 'forgepro_auth_user_v1';
-
 function createDefaultState(){
   return {
     workouts: [],
@@ -153,23 +150,11 @@ async function handleBackupImport(event){
 }
 
 function getAuthUser(){
-  try{
-    const raw = localStorage.getItem(AUTH_USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }catch(err){
-    return null;
-  }
+  return window.ForgeAuth?.getStoredAuthUser?.() || null;
 }
 
 function hasAuthSession(){
-  try{
-    const raw = localStorage.getItem(AUTH_SESSION_KEY);
-    if(!raw) return false;
-    const parsed = JSON.parse(raw);
-    return Boolean(parsed && parsed.uid);
-  }catch(err){
-    return false;
-  }
+  return Boolean(window.ForgeAuth?.hasStoredAuthSession?.());
 }
 
 function requireAuthSession(){
@@ -177,7 +162,6 @@ function requireAuthSession(){
 }
 
 function logoutApp(){
-  localStorage.removeItem(AUTH_SESSION_KEY);
-  localStorage.removeItem(AUTH_USER_KEY);
+  window.ForgeAuth?.clearAuthSession?.();
   window.location.replace('/auth.html?logout=1');
 }
