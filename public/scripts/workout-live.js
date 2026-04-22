@@ -176,16 +176,33 @@ function getExerciseThumb(ex){
   return (cleanText(ex.name).trim().charAt(0) || 'T').toUpperCase();
 }
 
-function renderLogRow(ex, exIdx, rowIdx, prevSets){
+function getLogRowState(ex, rowIdx, prevSets){
   const loggedSet = ex.sets[rowIdx];
   const prevSet = prevSets[rowIdx] || prevSets[prevSets.length-1];
   const draft = getDraftValues(ex, rowIdx);
   const repsFallback = getPlannedRepsFallback(ex);
+  return {
+    loggedSet,
+    prevSet,
+    draft,
+    repsFallback,
+    hasHistory: Boolean(prevSet),
+    isLogged: Boolean(loggedSet)
+  };
+}
+
+function renderLogRow(ex, exIdx, rowIdx, prevSets){
+  const row = getLogRowState(ex, rowIdx, prevSets);
+  const rowStateClass = row.isLogged
+    ? 'is-logged'
+    : row.hasHistory
+      ? 'has-history'
+      : 'is-empty-history';
 
   return `
-    <div class="log-grid-row">
+    <div class="log-grid-row ${rowStateClass}">
       <div class="log-set-badge">${rowIdx+1}</div>
-      <div class="log-prev ${prevSet?'':'empty'}">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'Brak historii'}</div>
+      <div class="log-prev ${row.hasHistory?'':'empty'}">${row.hasHistory?`${row.prevSet.kg} kg x ${row.prevSet.reps}`:'Brak historii'}</div>
       <input
         id="log-kg-${exIdx}-${rowIdx}"
         class="log-mini-inp"
@@ -194,8 +211,8 @@ function renderLogRow(ex, exIdx, rowIdx, prevSets){
         min="0"
         inputmode="decimal"
         placeholder="kg"
-        value="${loggedSet ? loggedSet.kg : draft.kg}"
-        ${loggedSet ? 'disabled' : ''}
+        value="${row.isLogged ? row.loggedSet.kg : row.draft.kg}"
+        ${row.isLogged ? 'disabled' : ''}
       >
       <input
         id="log-reps-${exIdx}-${rowIdx}"
@@ -203,13 +220,13 @@ function renderLogRow(ex, exIdx, rowIdx, prevSets){
         type="number"
         min="1"
         inputmode="numeric"
-        placeholder="${repsFallback || 'powt.'}"
-        value="${loggedSet ? loggedSet.reps : draft.reps}"
-        ${loggedSet ? 'disabled' : ''}
+        placeholder="${row.repsFallback || 'powt.'}"
+        value="${row.isLogged ? row.loggedSet.reps : row.draft.reps}"
+        ${row.isLogged ? 'disabled' : ''}
       >
-      ${loggedSet
-        ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" title="Usuń serię" class="log-check done">✓</button>`
-        : `<button onclick="logInlineSet(${exIdx},${rowIdx})" title="Zapisz serię" class="log-check save">✓</button>`
+      ${row.isLogged
+        ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" title="Usun serie" class="log-check done">&#10003;</button>`
+        : `<button onclick="logInlineSet(${exIdx},${rowIdx})" title="Zapisz serie" class="log-check save">&#10003;</button>`
       }
     </div>`;
 }
@@ -227,7 +244,7 @@ function renderLogCard(ex, exIdx){
           <div class="log-thumb">${thumb}</div>
           <div style="min-width:0;flex:1;">
             <div class="log-card-name">${esc(ex.name)}</div>
-            <div class="log-card-plan">${ex.plannedSets||3} serii · ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?` · ${esc(ex.rest)} przerwy`:''}</div>
+            <div class="log-card-plan">${ex.plannedSets||3} serii &middot; ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?` &middot; ${esc(ex.rest)} przerwy`:''}</div>
           </div>
         </div>
         <div class="log-card-count">
@@ -246,8 +263,8 @@ function renderLogCard(ex, exIdx){
         </div>
         ${Array.from({length:totalRows}, (_, rowIdx) => renderLogRow(ex, exIdx, rowIdx, prevSets)).join('')}
         <div class="log-row-actions">
-          <button class="log-add-btn" onclick="addInlineSetRow(${exIdx})">Dodaj serię</button>
-          ${ex.sets.length ? `<button class="log-copy-btn" onclick="copyLastLoggedSet(${exIdx})">Powtórz</button>` : ''}
+          <button class="log-add-btn" onclick="addInlineSetRow(${exIdx})">Dodaj serie</button>
+          ${ex.sets.length ? `<button class="log-copy-btn" onclick="copyLastLoggedSet(${exIdx})">Powtorz</button>` : ''}
         </div>
       </div>
     </div>`;
@@ -283,7 +300,7 @@ function renderHistTab(){
       ${ex.sets.map((s,i)=>`
         <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;">
           <span style="color:var(--muted);font-size:13px;">Seria ${i+1}</span>
-          <span style="font-weight:700;font-size:14px;">${s.kg} kg × ${s.reps}</span>
+          <span style="font-weight:700;font-size:14px;">${s.kg} kg &times; ${s.reps}</span>
         </div>
       `).join('')}
     </div>
