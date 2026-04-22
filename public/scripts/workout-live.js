@@ -176,65 +176,92 @@ function getExerciseThumb(ex){
   return (cleanText(ex.name).trim().charAt(0) || 'T').toUpperCase();
 }
 
+function renderLogRow(ex, exIdx, rowIdx, prevSets){
+  const loggedSet = ex.sets[rowIdx];
+  const prevSet = prevSets[rowIdx] || prevSets[prevSets.length-1];
+  const draft = getDraftValues(ex, rowIdx);
+  const repsFallback = getPlannedRepsFallback(ex);
+
+  return `
+    <div class="log-grid-row">
+      <div class="log-set-badge">${rowIdx+1}</div>
+      <div class="log-prev ${prevSet?'':'empty'}">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'Brak historii'}</div>
+      <input
+        id="log-kg-${exIdx}-${rowIdx}"
+        class="log-mini-inp"
+        type="number"
+        step="2.5"
+        min="0"
+        inputmode="decimal"
+        placeholder="kg"
+        value="${loggedSet ? loggedSet.kg : draft.kg}"
+        ${loggedSet ? 'disabled' : ''}
+      >
+      <input
+        id="log-reps-${exIdx}-${rowIdx}"
+        class="log-mini-inp"
+        type="number"
+        min="1"
+        inputmode="numeric"
+        placeholder="${repsFallback || 'powt.'}"
+        value="${loggedSet ? loggedSet.reps : draft.reps}"
+        ${loggedSet ? 'disabled' : ''}
+      >
+      ${loggedSet
+        ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" title="Usuń serię" class="log-check done">✓</button>`
+        : `<button onclick="logInlineSet(${exIdx},${rowIdx})" title="Zapisz serię" class="log-check save">✓</button>`
+      }
+    </div>`;
+}
+
+function renderLogCard(ex, exIdx){
+  const prevSets = getExerciseHistorySets(ex);
+  const totalRows = Math.max(ex.plannedSets || 3, ex.sets.length);
+  const isCurrent = exIdx === state.currentExIdx;
+  const thumb = getExerciseThumb(ex);
+
+  return `
+    <div id="log-card-${exIdx}" class="log-card ${isCurrent?'current':''}">
+      <div class="log-card-head">
+        <div class="log-card-meta">
+          <div class="log-thumb">${thumb}</div>
+          <div style="min-width:0;flex:1;">
+            <div class="log-card-name">${esc(ex.name)}</div>
+            <div class="log-card-plan">${ex.plannedSets||3} serii · ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?` · ${esc(ex.rest)} przerwy`:''}</div>
+          </div>
+        </div>
+        <div class="log-card-count">
+          <strong>${ex.sets.length}/${totalRows}</strong>
+          <span>serii</span>
+        </div>
+      </div>
+      ${ex.notes?`<div class="log-note">${esc(ex.notes)}</div>`:''}
+      <div class="log-grid-wrap">
+        <div class="log-grid-head">
+          <div>Seria</div>
+          <div>Poprzednio</div>
+          <div>kg</div>
+          <div>Powt.</div>
+          <div></div>
+        </div>
+        ${Array.from({length:totalRows}, (_, rowIdx) => renderLogRow(ex, exIdx, rowIdx, prevSets)).join('')}
+        <div class="log-row-actions">
+          <button class="log-add-btn" onclick="addInlineSetRow(${exIdx})">Dodaj serię</button>
+          ${ex.sets.length ? `<button class="log-copy-btn" onclick="copyLastLoggedSet(${exIdx})">Powtórz</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderLogTab(){
   const wkt = state.currentWorkout;
   if(!wkt) return;
 
   const counts = countWorkoutSets();
 
-  document.getElementById('logExerciseCards').innerHTML = wkt.exercises.map((ex, exIdx)=>{
-    const prevSets = getExerciseHistorySets(ex);
-    const totalRows = Math.max(ex.plannedSets || 3, ex.sets.length);
-    const isCurrent = exIdx === state.currentExIdx;
-    const thumb = getExerciseThumb(ex);
-    return `
-      <div id="log-card-${exIdx}" class="log-card ${isCurrent?'current':''}">
-        <div class="log-card-head">
-          <div class="log-card-meta">
-            <div class="log-thumb">${thumb}</div>
-            <div style="min-width:0;flex:1;">
-              <div class="log-card-name">${esc(ex.name)}</div>
-              <div class="log-card-plan">${ex.plannedSets||3} serii · ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?` · ${esc(ex.rest)} przerwy`:''}</div>
-            </div>
-          </div>
-          <div class="log-card-count">
-            <strong>${ex.sets.length}/${totalRows}</strong>
-            <span>serii</span>
-          </div>
-        </div>
-        ${ex.notes?`<div class="log-note">${esc(ex.notes)}</div>`:''}
-        <div class="log-grid-wrap">
-          <div class="log-grid-head">
-            <div>Seria</div>
-            <div>Poprzednio</div>
-            <div>kg</div>
-            <div>Powt.</div>
-            <div></div>
-          </div>
-          ${Array.from({length:totalRows},(_,rowIdx)=>{
-            const loggedSet = ex.sets[rowIdx];
-            const prevSet = prevSets[rowIdx] || prevSets[prevSets.length-1];
-            const draft = getDraftValues(ex, rowIdx);
-            const repsFallback = getPlannedRepsFallback(ex);
-            return `
-              <div class="log-grid-row">
-                <div class="log-set-badge">${rowIdx+1}</div>
-                <div class="log-prev ${prevSet?'':'empty'}">${prevSet?`${prevSet.kg} kg x ${prevSet.reps}`:'Brak historii'}</div>
-                <input id="log-kg-${exIdx}-${rowIdx}" class="log-mini-inp" type="number" step="2.5" min="0" inputmode="decimal" placeholder="kg" value="${loggedSet?loggedSet.kg:draft.kg}" ${loggedSet?'disabled':''}>
-                <input id="log-reps-${exIdx}-${rowIdx}" class="log-mini-inp" type="number" min="1" inputmode="numeric" placeholder="${repsFallback || 'powt.'}" value="${loggedSet?loggedSet.reps:draft.reps}" ${loggedSet?'disabled':''}>
-                ${loggedSet
-                  ? `<button onclick="removeLoggedSet(${exIdx},${rowIdx})" title="Usuń serię" class="log-check done">✓</button>`
-                  : `<button onclick="logInlineSet(${exIdx},${rowIdx})" title="Zapisz serię" class="log-check save">✓</button>`
-                }
-              </div>`;
-          }).join('')}
-          <div class="log-row-actions">
-            <button class="log-add-btn" onclick="addInlineSetRow(${exIdx})">Dodaj serię</button>
-            ${ex.sets.length ? `<button class="log-copy-btn" onclick="copyLastLoggedSet(${exIdx})">Powtórz</button>` : ''}
-          </div>
-        </div>
-      </div>`;
-  }).join('');
+  document.getElementById('logExerciseCards').innerHTML = wkt.exercises
+    .map((ex, exIdx) => renderLogCard(ex, exIdx))
+    .join('');
   const btn = document.getElementById('mainActionBtn');
   if(btn){
     btn.textContent = `${counts.logged}/${counts.planned} ZAPISZ`;
