@@ -412,57 +412,31 @@
   </button>
 </nav>
 
+<script src="/scripts/exercise-library.js"></script>
 <script src="/scripts/auth-shared.js"></script>
 <script src="/scripts/app-state.js"></script>
 <script src="/scripts/workout-live.js"></script>
 <script>
 // ===================== DATA =====================
-const EXERCISES_DB = [
-  // Klatka
-  {id:'bp', name:'Wyciskanie sztangi', cat:'Klatka', muscle:'Klatka piersiowa'},
-  {id:'dbp', name:'Wyciskanie hantli', cat:'Klatka', muscle:'Klatka piersiowa'},
-  {id:'fly', name:'Rozpiętki hantli', cat:'Klatka', muscle:'Klatka piersiowa'},
-  {id:'cbp', name:'Wyciskanie na wyciągu', cat:'Klatka', muscle:'Klatka piersiowa'},
-  {id:'dip', name:'Dipy', cat:'Klatka', muscle:'Klatka / Triceps'},
-  {id:'incbp', name:'Wyciskanie skos górny', cat:'Klatka', muscle:'Górna klatka'},
-  // Plecy
-  {id:'dl', name:'Martwy ciąg', cat:'Plecy', muscle:'Plecy / Nogi'},
-  {id:'row', name:'Wiosłowanie sztangą', cat:'Plecy', muscle:'Plecy'},
-  {id:'pu', name:'Podciąganie', cat:'Plecy', muscle:'Plecy / Biceps'},
-  {id:'latpd', name:'Ściąganie drążka', cat:'Plecy', muscle:'Plecy'},
-  {id:'carow', name:'Wiosłowanie wyciąg', cat:'Plecy', muscle:'Plecy'},
-  // Nogi
-  {id:'sq', name:'Squat', cat:'Nogi', muscle:'Nogi'},
-  {id:'fsq', name:'Front Squat', cat:'Nogi', muscle:'Czworogłowe'},
-  {id:'leg', name:'Leg Press', cat:'Nogi', muscle:'Nogi'},
-  {id:'rdk', name:'Martwy rumuński', cat:'Nogi', muscle:'Uda tylne'},
-  {id:'lunge', name:'Wykroki', cat:'Nogi', muscle:'Pośladki / Czworogłowe'},
-  {id:'legcurl', name:'Uginanie nóg', cat:'Nogi', muscle:'Uda tylne'},
-  {id:'legext', name:'Prostowanie nóg', cat:'Nogi', muscle:'Czworogłowe'},
-  {id:'calf', name:'Wspięcia na palce', cat:'Nogi', muscle:'Łydki'},
-  // Ramiona
-  {id:'ohp', name:'OHP (wycisk stojąc)', cat:'Barki', muscle:'Barki'},
-  {id:'dbs', name:'Wycisk hantli barki', cat:'Barki', muscle:'Barki'},
-  {id:'lrl', name:'Odwodzenie boczne', cat:'Barki', muscle:'Barki środkowe'},
-  {id:'frl', name:'Odwodzenie przednie', cat:'Barki', muscle:'Barki przednie'},
-  {id:'rrl', name:'Wznosy w opadzie', cat:'Barki', muscle:'Barki tylne'},
-  // Biceps
-  {id:'bbc', name:'Uginanie sztangi biceps', cat:'Biceps', muscle:'Biceps'},
-  {id:'hbc', name:'Uginanie hantli', cat:'Biceps', muscle:'Biceps'},
-  {id:'cbbc', name:'Uginanie wyciąg', cat:'Biceps', muscle:'Biceps'},
-  {id:'hm', name:'Hammer curl', cat:'Biceps', muscle:'Biceps / Ramię'},
-  // Triceps
-  {id:'skullc', name:'Skull crushers', cat:'Triceps', muscle:'Triceps'},
-  {id:'tpd', name:'Prostowanie wyciąg', cat:'Triceps', muscle:'Triceps'},
-  {id:'tdip', name:'Dipy triceps', cat:'Triceps', muscle:'Triceps'},
-  {id:'ot', name:'Wycisk nad głową triceps', cat:'Triceps', muscle:'Triceps'},
-  // Core
-  {id:'plank', name:'Plank', cat:'Core', muscle:'Core'},
-  {id:'ab', name:'Brzuszki', cat:'Core', muscle:'Brzuch'},
-  {id:'leg_raise', name:'Unoszenie nóg', cat:'Core', muscle:'Dolny brzuch'},
-];
+const EXERCISES_DB = window.ExerciseLibrary.getCatalog();
 
 const CATS = ['Wszystkie','Klatka','Plecy','Nogi','Barki','Biceps','Triceps','Core'];
+const getExerciseKey = value => window.ExerciseLibrary.getExerciseKey(value);
+const getExerciseLabel = value => window.ExerciseLibrary.getExerciseLabel(value);
+const enrichExercise = (value, options) => window.ExerciseLibrary.enrichExercise(value, options);
+const normalizeImportedPlan = plan => window.ExerciseLibrary.normalizeImportedPlan(plan);
+
+function matchesExerciseQuery(exercise, query){
+  const normalizedQuery = window.ExerciseLibrary.normalize(query || '');
+  if(!normalizedQuery) return true;
+  const haystack = [
+    exercise.name,
+    exercise.muscle,
+    exercise.cat,
+    ...(Array.isArray(exercise.aliases) ? exercise.aliases : [])
+  ].map(value => window.ExerciseLibrary.normalize(value)).join(' ');
+  return haystack.includes(normalizedQuery);
+}
 
 // ===================== NAVIGATION =====================
 const screens = ['home','workout','ai','history','progress','workouts','new-workout'];
@@ -602,7 +576,7 @@ function startFromTemplate(id){
     id: Date.now(),
     name: tpl.name,
     startTime: Date.now(),
-    exercises: tpl.exercises.map(e=>({...e, sets:[]})),
+    exercises: tpl.exercises.map(e=>enrichExercise({...e, sets:[]}, {preserveName:false})),
     done: false,
   };
   state.currentExIdx = 0;
@@ -647,10 +621,10 @@ function setNewWktCat(c){
 }
 
 function renderNewWktExList(){
-  const q = (document.getElementById('newWktSearch').value||'').toLowerCase();
+  const q = document.getElementById('newWktSearch').value || '';
   const list = EXERCISES_DB.filter(e=>{
     const matchCat = newWktCat==='Wszystkie' || e.cat===newWktCat;
-    const matchQ = !q || e.name.toLowerCase().includes(q) || e.muscle.toLowerCase().includes(q);
+    const matchQ = matchesExerciseQuery(e, q);
     return matchCat && matchQ;
   });
   const selIds = newWktSelected.map(e=>e.id);
@@ -695,10 +669,7 @@ function updateSelectedBar(){
 function addCustomExercise(){
   const name = cleanText(prompt('Nazwa cwiczenia:'), '');
   if(!name) return;
-  const cat = 'Custom';
-  const id = 'custom_'+Date.now();
-  const ex = {id, name, cat, muscle:'Wlasne'};
-  EXERCISES_DB.push(ex);
+  const ex = window.ExerciseLibrary.registerCustomExercise(name);
   newWktSelected.push(ex);
   renderNewWktExList();
   updateSelectedBar();
@@ -714,7 +685,7 @@ function saveNewWorkoutAndStart(){
   const tpl = {
     id: Date.now(),
     name,
-    exercises: newWktSelected.map(e=>({...e})),
+    exercises: newWktSelected.map(e=>enrichExercise({...e}, {preserveName:false})),
     createdAt: Date.now(),
   };
   state.savedTemplates.push(tpl);
@@ -723,7 +694,7 @@ function saveNewWorkoutAndStart(){
     id: Date.now()+1,
     name,
     startTime: Date.now(),
-    exercises: newWktSelected.map(e=>({...e, sets:[]})),
+    exercises: newWktSelected.map(e=>enrichExercise({...e, sets:[]}, {preserveName:false})),
     done: false,
   };
   state.currentExIdx = 0;
@@ -771,10 +742,10 @@ function selectCat(c){
 }
 
 function renderExList(){
-  const q = document.getElementById('exSearch').value.toLowerCase();
+  const q = document.getElementById('exSearch').value || '';
   const list = EXERCISES_DB.filter(e=>{
     const matchCat = selectedCat==='Wszystkie' || e.cat===selectedCat;
-    const matchQ = !q || e.name.toLowerCase().includes(q) || e.muscle.toLowerCase().includes(q);
+    const matchQ = matchesExerciseQuery(e, q);
     return matchCat && matchQ;
   });
 
@@ -799,7 +770,7 @@ function addExercise(id){
   if(!ex) return;
   if(exPanelMode==='new'){
     if(!newWktExercises.find(e=>e.id===id)){
-      newWktExercises.push({...ex, sets:[]});
+      newWktExercises.push(enrichExercise({...ex, sets:[]}, {preserveName:false}));
       renderWktExList();
     } else {
       newWktExercises = newWktExercises.filter(e=>e.id!==id);
@@ -809,7 +780,7 @@ function addExercise(id){
   } else if(exPanelMode==='live'){
     // add to live workout
     if(!state.currentWorkout.exercises.find(e=>e.id===id)){
-      state.currentWorkout.exercises.push({...ex, sets:[]});
+      state.currentWorkout.exercises.push(enrichExercise({...ex, sets:[]}, {preserveName:false}));
       save();
     }
     closePanel('exPanel');
@@ -857,7 +828,7 @@ function saveWorkoutTemplate(){
     id: Date.now(),
     name,
     startTime: Date.now(),
-    exercises: newWktExercises.map(e=>({...e, sets:[]})),
+    exercises: newWktExercises.map(e=>enrichExercise({...e, sets:[]}, {preserveName:false})),
     done: false,
   };
   state.currentExIdx = 0;
@@ -1002,11 +973,11 @@ async function loadHomeAI(last){
 }
 
 function renderHomeStats(){
-  const keyEx = ['Wyciskanie sztangi','Squat','Martwy ciąg'];
-  const labels = ['Wyciskanie','Squat','Martwy'];
-  const prs = keyEx.map(name=>{
+  const keyEx = ['bp','sq','dl'];
+  const labels = ['Wyciskanie','Przysiad','Martwy'];
+  const prs = keyEx.map(key=>{
     let max=0;
-    state.workouts.forEach(w=>w.exercises.filter(e=>e.name===name).forEach(e=>e.sets.forEach(s=>{if(s.kg>max)max=s.kg;})));
+    state.workouts.forEach(w=>w.exercises.filter(e=>getExerciseKey(e)===key).forEach(e=>e.sets.forEach(s=>{if(s.kg>max)max=s.kg;})));
     return max;
   });
   document.getElementById('statsRow').innerHTML=prs.map((pr,i)=>`
@@ -1068,13 +1039,15 @@ function deleteWorkout(id){
 
 // ===================== PROGRESS =====================
 function renderProgress(){
-  // Build exercise selector
-  const allEx=new Set();
-  state.workouts.forEach(w=>w.exercises.forEach(e=>allEx.add(e.name)));
+  const labelsByKey = new Map();
+  state.workouts.forEach(w=>w.exercises.forEach(e=>{
+    const key = getExerciseKey(e);
+    if(!labelsByKey.has(key)) labelsByKey.set(key, e.canonicalName || getExerciseLabel(e));
+  }));
   const sel=document.getElementById('chartExercise');
   const prev=sel.value;
-  sel.innerHTML=[...allEx].map(n=>`<option${n===prev?' selected':''}>${n}</option>`).join('');
-  if(!sel.value&&allEx.size>0) sel.value=[...allEx][0];
+  sel.innerHTML=[...labelsByKey.entries()].map(([key,label])=>`<option value="${esc(key)}"${key===prev?' selected':''}>${esc(label)}</option>`).join('');
+  if(!sel.value&&labelsByKey.size>0) sel.value=[...labelsByKey.keys()][0];
   renderChart();
   renderWeightTracking();
   renderPRs();
@@ -1083,10 +1056,10 @@ function renderProgress(){
 }
 
 function renderChart(){
-  const exName=document.getElementById('chartExercise').value;
+  const exKey=document.getElementById('chartExercise').value;
   const data=[];
   state.workouts.filter(w=>w.done).forEach(w=>{
-    const ex=w.exercises.find(e=>e.name===exName);
+    const ex=w.exercises.find(e=>getExerciseKey(e)===exKey);
     if(ex&&ex.sets.length>0){
       const max=Math.max(...ex.sets.map(s=>s.kg));
       data.push({date:new Date(w.startTime),kg:max});
@@ -1115,14 +1088,17 @@ function renderChart(){
 
 function renderPRs(){
   const prs={};
+  const labels={};
   state.workouts.forEach(w=>w.exercises.forEach(e=>e.sets.forEach(s=>{
-    if(!prs[e.name]||s.kg>prs[e.name]) prs[e.name]=s.kg;
+    const key = getExerciseKey(e);
+    labels[key] = e.canonicalName || getExerciseLabel(e);
+    if(!prs[key]||s.kg>prs[key]) prs[key]=s.kg;
   })));
   const list=document.getElementById('prList');
   if(!Object.keys(prs).length){list.innerHTML='<div style="font-size:13px;color:var(--muted);">Brak danych — zaloguj trening.</div>';return;}
-  list.innerHTML=Object.entries(prs).sort((a,b)=>b[1]-a[1]).map(([n,kg])=>`
+  list.innerHTML=Object.entries(prs).sort((a,b)=>b[1]-a[1]).map(([key,kg])=>`
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-size:14px;">🏆 ${n}</span>
+      <span style="font-size:14px;">🏆 ${esc(labels[key] || key)}</span>
       <span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;">${kg}<span style="font-size:13px;color:var(--muted);">kg</span></span>
     </div>
   `).join('');
@@ -1277,20 +1253,22 @@ function toggleInjury(i){
 async function loadProgressAI(){
   const totalWkts=state.workouts.filter(w=>w.done).length;
   if(totalWkts<2){document.getElementById('progAiTxt').textContent='Zaloguj co najmniej 2 treningi aby AI mogło przeanalizować Twój progres.';return;}
-  const prs=[];
-  const exSet=new Set();
-  state.workouts.forEach(w=>w.exercises.forEach(e=>exSet.add(e.name)));
-  exSet.forEach(name=>{
-    let max=0;
-    state.workouts.forEach(w=>w.exercises.filter(e=>e.name===name).forEach(e=>e.sets.forEach(s=>{if(s.kg>max)max=s.kg;})));
-    if(max) prs.push(`${name}: ${max}kg`);
-  });
+  const snapshots = buildExerciseSnapshots();
+  const prs = snapshots
+    .filter(item => item.bestKg > 0)
+    .sort((a,b)=>b.bestKg-a.bestKg)
+    .slice(0,8)
+    .map(item=>`${item.name}: ${item.bestKg}kg`);
+  const plateau = snapshots
+    .filter(item => item.sessions >= 3 && item.lastTopKg <= item.prevTopKg)
+    .slice(0,3)
+    .map(item => item.name);
   const injuries=state.injuries.filter(i=>i.active).map(i=>i.name).join(', ');
   const weightEntries = getSortedWeightEntries();
   const lastWeight = weightEntries.at(-1);
   const firstWeight = weightEntries[0];
   const weightSummary = lastWeight ? `Waga: ${lastWeight.value.toFixed(1)} kg${firstWeight ? ` (zmiana ${((lastWeight.value-firstWeight.value)>0?'+':'')}${(lastWeight.value-firstWeight.value).toFixed(1)} kg)` : ''}.` : '';
-  const cacheKey = `${totalWkts}|${prs.join('|')}|${injuries}|${weightSummary}`;
+  const cacheKey = `${totalWkts}|${prs.join('|')}|${injuries}|${weightSummary}|${plateau.join('|')}`;
   if(aiInsightCache.progressKey === cacheKey && aiInsightCache.progressText){
     const cachedEl=document.getElementById('progAiTxt');
     if(cachedEl) cachedEl.textContent=aiInsightCache.progressText;
@@ -1298,7 +1276,7 @@ async function loadProgressAI(){
   }
   try{
     const r=await callAI(
-      `Łącznie ${totalWkts} treningów. Rekordy: ${prs.join(', ')}. ${weightSummary} ${injuries?'Kontuzje: '+injuries+'. ':''}Oceń progres i daj 2 krótkie wskazówki. Maksymalnie 45 słów, bez lania wody.`,
+      `Łącznie ${totalWkts} treningów. Rekordy: ${prs.join(', ')}. ${weightSummary} ${injuries?'Kontuzje: '+injuries+'. ':''}${plateau.length ? `Możliwy plateau: ${plateau.join(', ')}. ` : ''}Oceń progres i daj 2 krótkie wskazówki. Maksymalnie 45 słów, bez lania wody.`,
       'Jesteś Pro Coachem siłowni. Odpowiadasz po polsku krótko, analitycznie i praktycznie. Maksymalnie 45 słów.');
     const el=document.getElementById('progAiTxt');
     if(el) el.textContent=r;
@@ -1312,7 +1290,35 @@ let aiMode='coach';
 // Historia konwersacji per tryb — AI pamięta wątek
 let chatHistory = {coach:[], injury:[], nutrition:[], plan:[]};
 // Limit wiadomości w historii (żeby nie przekroczyć kontekstu)
-const CHAT_HISTORY_LIMIT = 6; // max par user/assistant w historii
+const CHAT_HISTORY_LIMIT = 8; // max par user/assistant w historii
+
+function buildExerciseSnapshots(){
+  const byKey = new Map();
+  state.workouts.filter(w=>w.done).forEach(w=>{
+    w.exercises.forEach(ex=>{
+      const key = getExerciseKey(ex);
+      const item = byKey.get(key) || {
+        name: ex.canonicalName || getExerciseLabel(ex),
+        bestKg: 0,
+        sessions: 0,
+        lastTopKg: 0,
+        prevTopKg: 0,
+        lastVolume: 0
+      };
+      if(ex.sets.length){
+        const topKg = Math.max(...ex.sets.map(s=>Number(s.kg) || 0));
+        const volume = ex.sets.reduce((sum, set)=>sum + ((Number(set.kg) || 0) * (Number(set.reps) || 0)), 0);
+        item.sessions += 1;
+        item.bestKg = Math.max(item.bestKg, topKg);
+        item.prevTopKg = item.lastTopKg;
+        item.lastTopKg = topKg;
+        item.lastVolume = volume;
+      }
+      byKey.set(key, item);
+    });
+  });
+  return [...byKey.values()];
+}
 
 function buildSystemContext(basePrompt){
   // Buduje system prompt wzbogacony o dane użytkownika z aplikacji
@@ -1330,18 +1336,28 @@ function buildSystemContext(basePrompt){
   }
 
   // Rekordy
-  const prs = [];
-  const exSet = new Set();
-  state.workouts.forEach(w=>w.exercises.forEach(e=>exSet.add(e.name)));
-  exSet.forEach(name=>{
-    let max=0;
-    state.workouts.forEach(w=>w.exercises.filter(e=>e.name===name).forEach(e=>e.sets.forEach(s=>{if(s.kg>max)max=s.kg;})));
-    if(max) prs.push(`${name}: ${max}kg`);
-  });
+  const snapshots = buildExerciseSnapshots();
+  const prs = snapshots
+    .filter(item => item.bestKg > 0)
+    .sort((a,b)=>b.bestKg-a.bestKg)
+    .slice(0,8)
+    .map(item=>`${item.name}: ${item.bestKg}kg`);
+  const trends = snapshots
+    .filter(item => item.sessions >= 2)
+    .slice(-8)
+    .map(item=>{
+      const delta = item.lastTopKg - item.prevTopKg;
+      const sign = delta > 0 ? '+' : '';
+      return `${item.name}: ostatnio ${item.lastTopKg}kg (${sign}${delta}kg vs poprzednio)`;
+    });
+  const lastWeights = getSortedWeightEntries().slice(-7);
+  const avgWeight = lastWeights.length ? (lastWeights.reduce((sum, entry)=>sum + entry.value, 0) / lastWeights.length).toFixed(1) : '';
 
   let context = basePrompt;
   if(totalWkts>0) context += `\n\nDANE UŻYTKOWNIKA:\n- Łącznie treningów: ${totalWkts}`;
   if(prs.length) context += `\n- Rekordy: ${prs.join(', ')}`;
+  if(trends.length) context += `\n- Ostatnie trendy: ${trends.join(' | ')}`;
+  if(avgWeight) context += `\n- Średnia waga z 7 dni: ${avgWeight} kg`;
   if(activeInjuries.length) context += `\n- Aktywne kontuzje: ${activeInjuries.join(', ')}`;
   if(planInfo) context += `\n- Plan treningowy:\n${planInfo}`;
 
@@ -1431,7 +1447,7 @@ async function callAIWithHistory(systemPrompt, messages){
         {role: 'system', content: systemPrompt},
         ...messages
       ],
-      max_tokens: 220,
+      max_tokens: 300,
       temperature: 0.5
     })
   });
@@ -2033,17 +2049,18 @@ function showImportPreview(plan){
 function importPlanToApp(){
   if(!parsedPlan) return;
   updateImportStep(4);
+  const normalizedPlan = normalizeImportedPlan(parsedPlan);
 
   // Save plan to state
   if(!state.importedPlans) state.importedPlans = [];
   state.importedPlans.push({
     id: Date.now(),
-    ...parsedPlan,
+    ...normalizedPlan,
     importedAt: Date.now(),
   });
   save();
 
-  const totalEx = parsedPlan.days.reduce((s,d)=>s+d.exercises.length,0);
+  const totalEx = normalizedPlan.days.reduce((s,d)=>s+d.exercises.length,0);
 
   document.getElementById('importContent').innerHTML = `
     <div style="padding:0 16px;text-align:center;">
@@ -2051,7 +2068,7 @@ function importPlanToApp(){
       <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:8px;">Plan zaimportowany!</div>
       <div style="font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:24px;">
         <strong style="color:var(--text);">${parsedPlan.planName}</strong><br>
-        ${parsedPlan.days.length} dni · ${totalEx} ćwiczeń<br>
+        ${normalizedPlan.days.length} dni · ${totalEx} ćwiczeń<br>
         gotowe do trenowania
       </div>
 
@@ -2139,26 +2156,12 @@ function startFromImportedPlan(planId, encodedDayName){
   const day = plan.days.find(d=>d.dayName===dayName);
   if(!day) return;
 
-  // Map exercises to app format
-  // WAŻNE: zachowaj oryginalną nazwę z planu — dopasuj do DB tylko dla uzyskania kategorii/mięśnia
-  const exercises = day.exercises.map(ex=>{
-    const found = EXERCISES_DB.find(e=>
-      e.name.toLowerCase().includes(ex.name.toLowerCase().split(' ')[0]) ||
-      ex.name.toLowerCase().includes(e.name.toLowerCase().split(' ')[0])
-    );
-    // Zawsze używaj oryginalnej nazwy z planu, nie z DB
-    return {
-      id: found ? found.id+'_plan' : 'custom_'+Date.now()+'_'+Math.random(),
-      name: ex.name,  // oryginalna nazwa — NIEZMIENIONA
-      cat: found ? found.cat : 'Custom',
-      muscle: found ? found.muscle : '—',
-      sets: [],
-      plannedSets: ex.sets,
-      plannedReps: ex.reps,
-      rest: ex.rest || '',
-      notes: ex.notes || ''
-    };
-  });
+  const exercises = day.exercises.map(ex => enrichExercise({
+    ...ex,
+    sets: [],
+    plannedSets: ex.plannedSets ?? ex.sets,
+    plannedReps: ex.reps ?? ex.plannedReps
+  }, {preserveName:true}));
 
   state.currentWorkout = {
     id: Date.now(),

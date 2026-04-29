@@ -118,9 +118,11 @@ function goToLogEx(idx){
 }
 
 function getPrevExerciseSets(exId){
+  const target = cleanText(exId);
+  if(!target) return [];
   const history = state.workouts.filter(w=>w.done);
   for(let i=history.length-1;i>=0;i--){
-    const ex = history[i].exercises.find(e=>e.id===exId);
+    const ex = history[i].exercises.find(e=>(e.exerciseKey || e.id)===target);
     if(ex && ex.sets.length>0 && !ex.skipped){
       return ex.sets;
     }
@@ -129,11 +131,14 @@ function getPrevExerciseSets(exId){
 }
 
 function getPrevExerciseSetsByName(exName){
-  const target = cleanText(exName).toLowerCase();
+  const target = window.ExerciseLibrary?.getExerciseKey?.(exName) || cleanText(exName).toLowerCase();
   if(!target) return [];
   const history = state.workouts.filter(w=>w.done);
   for(let i=history.length-1;i>=0;i--){
-    const ex = history[i].exercises.find(e=>cleanText(e.name).toLowerCase()===target);
+    const ex = history[i].exercises.find(e=>{
+      const candidate = window.ExerciseLibrary?.getExerciseKey?.(e) || cleanText(e.name).toLowerCase();
+      return candidate === target;
+    });
     if(ex && ex.sets.length>0 && !ex.skipped){
       return ex.sets;
     }
@@ -142,7 +147,7 @@ function getPrevExerciseSetsByName(exName){
 }
 
 function getExerciseHistorySets(ex){
-  const byId = getPrevExerciseSets(ex.id);
+  const byId = getPrevExerciseSets(ex.exerciseKey || ex.id);
   if(byId.length) return byId;
   return getPrevExerciseSetsByName(ex.name);
 }
@@ -388,9 +393,10 @@ function renderLiveWorkout(){
 }
 
 function getPrevPerf(exId){
+  const target = cleanText(exId);
   const history = state.workouts.filter(w=>w.done);
   for(let i=history.length-1;i>=0;i--){
-    const ex = history[i].exercises.find(e=>e.id===exId);
+    const ex = history[i].exercises.find(e=>(e.exerciseKey || e.id)===target);
     if(ex && ex.sets.length>0 && !ex.skipped){
       return ex.sets.map(s=>`${s.kg}kg×${s.reps}`).join(', ');
     }
@@ -543,7 +549,7 @@ function restoreRestOverlay(){
 }
 
 async function aiLiveComment(ex, kg, reps){
-  const prev = getPrevPerf(ex.id);
+  const prev = getPrevPerf(ex.exerciseKey || ex.id);
   const prompt = `Trening na żywo. Ćwiczenie: ${cleanText(ex.name)}. Seria ${ex.sets.length}: ${kg}kg x ${reps} powt. ${prev?'Poprzednio: '+prev:'Pierwsze podejście.'} Daj 1 krótkie zdanie motywacji lub wskazówki. Maksymalnie 20 słów. Po polsku.`;
   try{
     const r = await callAI(prompt,'Jesteś zwięzłym Pro Coachem siłowni. Odpowiadasz jednym zdaniem, po polsku, konkretnie i motywująco.');

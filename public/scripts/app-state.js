@@ -43,7 +43,7 @@ function encodeInlineArg(value){
 
 function migrateState(raw){
   if(!raw || typeof raw !== 'object' || Array.isArray(raw)) return createDefaultState();
-  return {
+  const migrated = {
     ...createDefaultState(),
     ...raw,
     workouts: Array.isArray(raw.workouts) ? raw.workouts : [],
@@ -56,6 +56,7 @@ function migrateState(raw){
     bodyWeight: Array.isArray(raw.bodyWeight) ? raw.bodyWeight : [],
     meta: {version: 3}
   };
+  return window.ExerciseLibrary?.normalizeAppData?.(migrated) || migrated;
 }
 
 function withAbandonedCurrentWorkout(){
