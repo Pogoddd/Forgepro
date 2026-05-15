@@ -968,8 +968,8 @@ async function loadHomeAI(last){
     return;
   }
   try{
-    const r=await callAI(`Trening: ${cleanText(last.name)}. ${summary}. Daj jedną krótką obserwację i jedną konkretną wskazówkę na następny trening. Maksymalnie 30 słów, bez wstępu.`,
-      'Jesteś Pro Coachem siłowni. Odpowiadasz po polsku bardzo krótko, konkretnie i użytkowo. Maksymalnie 30 słów.');
+    const r=await callAI(`Trening: ${cleanText(last.name)}. ${summary}. Daj 1 krótki, trafny komentarz po treningu i 1 konkretną rzecz na następną sesję. Maksymalnie 35 słów.`,
+      'Jesteś trenerem, który po sesji rzuca szybki, celny komentarz. Brzmij naturalnie, lekko i konkretnie. Zero wstępu, zero korpo-motywacji.');
     const el=document.getElementById('homeAiTxt');
     if(el) el.textContent=r;
     aiInsightCache.homeKey = cacheKey;
@@ -1284,8 +1284,8 @@ async function loadProgressAI(){
   }
   try{
     const r=await callAI(
-      `Łącznie ${totalWkts} treningów. Rekordy: ${prs.join(', ')}. ${weightSummary} ${injuries?'Kontuzje: '+injuries+'. ':''}${plateau.length ? `Możliwy plateau: ${plateau.join(', ')}. ` : ''}Oceń progres i daj 2 krótkie wskazówki. Maksymalnie 45 słów, bez lania wody.`,
-      'Jesteś Pro Coachem siłowni. Odpowiadasz po polsku krótko, analitycznie i praktycznie. Maksymalnie 45 słów.');
+      `Łącznie ${totalWkts} treningów. Rekordy: ${prs.join(', ')}. ${weightSummary} ${injuries?'Kontuzje: '+injuries+'. ':''}${plateau.length ? `Możliwy plateau: ${plateau.join(', ')}. ` : ''}Oceń progres uczciwie. Najpierw 1 mocny wniosek, potem 2 konkretne następne kroki. Maksymalnie 55 słów.`,
+      'Jesteś bardzo dobrym trenerem siłowym. Mów krótko, konkretnie, lekko po ludzku i bez coachowego bełkotu. Jeśli progres jest średni, powiedz to wprost, ale konstruktywnie.');
     const el=document.getElementById('progAiTxt');
     if(el) el.textContent=r;
     aiInsightCache.progressKey = cacheKey;
@@ -1328,6 +1328,51 @@ function buildExerciseSnapshots(){
   return [...byKey.values()];
 }
 
+function inferUserProfile(){
+  const doneWorkouts = state.workouts.filter(w=>w.done);
+  const totalWkts = doneWorkouts.length;
+  const activeDays = new Set(doneWorkouts.map(w => new Date(w.startTime).toISOString().slice(0,10))).size;
+  const snapshots = buildExerciseSnapshots();
+  const hasStrengthBase = snapshots.some(item => item.bestKg >= 100) || snapshots.length >= 8;
+  const weightEntries = getSortedWeightEntries();
+  const weightDelta = weightEntries.length >= 2 ? (weightEntries.at(-1).value - weightEntries[0].value) : 0;
+  const level = totalWkts < 8 ? 'początkujący' : totalWkts < 30 ? 'średniozaawansowany' : 'zaawansowany';
+  const tone = totalWkts < 8 ? 'bardziej wspierający i prosty' : hasStrengthBase ? 'bardziej konkretny i techniczny' : 'bardziej praktyczny i rzeczowy';
+  let likelyGoal = 'ogólny progres sylwetkowo-siłowy';
+  if(weightEntries.length >= 3){
+    if(weightDelta >= 1.2) likelyGoal = 'budowanie masy / zwiększanie wagi';
+    else if(weightDelta <= -1.2) likelyGoal = 'redukcja / kontrola masy ciała';
+  }
+  return {
+    totalWkts,
+    activeDays,
+    level,
+    tone,
+    likelyGoal
+  };
+}
+
+function buildCoachPersona(basePrompt){
+  const profile = inferUserProfile();
+  return `${basePrompt}
+
+STYL ODPOWIEDZI:
+- Mów po polsku, naturalnie, po ludzku i z luzem.
+- Brzmij jak ogarnięty trener, nie jak chatbot ani encyklopedia.
+- Możesz wrzucić krótką, lekką ironię albo żart, ale tylko jeśli pasuje i nie rozmywa porady.
+- Najpierw konkretny wniosek, potem 1-3 praktyczne wskazówki.
+- Unikaj ogólników typu "słuchaj ciała" bez doprecyzowania co to znaczy tutaj.
+- Jeśli brakuje danych, powiedz to wprost i daj najlepszą hipotezę zamiast zmyślać.
+- Dopasuj poziom odpowiedzi do użytkownika: ${profile.level}, ton: ${profile.tone}.
+- Zakładaj, że użytkownik chce realnej poprawy treningu, a nie motywacyjnego gadania.
+
+PROFIL UŻYTKOWNIKA:
+- Poziom: ${profile.level}
+- Łącznie treningów w appce: ${profile.totalWkts}
+- Aktywnych dni treningowych: ${profile.activeDays}
+- Prawdopodobny cel: ${profile.likelyGoal}`;
+}
+
 function buildSystemContext(basePrompt){
   // Buduje system prompt wzbogacony o dane użytkownika z aplikacji
   const totalWkts = state.workouts.filter(w=>w.done).length;
@@ -1361,7 +1406,7 @@ function buildSystemContext(basePrompt){
   const lastWeights = getSortedWeightEntries().slice(-7);
   const avgWeight = lastWeights.length ? (lastWeights.reduce((sum, entry)=>sum + entry.value, 0) / lastWeights.length).toFixed(1) : '';
 
-  let context = basePrompt;
+  let context = buildCoachPersona(basePrompt);
   if(totalWkts>0) context += `\n\nDANE UŻYTKOWNIKA:\n- Łącznie treningów: ${totalWkts}`;
   if(prs.length) context += `\n- Rekordy: ${prs.join(', ')}`;
   if(trends.length) context += `\n- Ostatnie trendy: ${trends.join(' | ')}`;
@@ -1374,23 +1419,23 @@ function buildSystemContext(basePrompt){
 
 const modeConfig={
   coach:{hint:'Twój Pro Coach analizuje progres i odpowiada na pytania o trening.',
-    sys:'Jesteś Pro Coachem siłowni w aplikacji ForgePro. Odpowiadasz po polsku, konkretnie i krótko. Maksymalnie 70 słów, bez długiego wstępu.',
-    chips:['Jak przebić plateau?','Kiedy deload?','Ile serii tygodniowo?','Ocen mój progres']},
+    sys:'Jesteś Pro Coachem siłowni w aplikacji ForgePro. Masz wiedzę z hipertrofii, siły, autoregulacji, deloadów, doboru objętości i techniki ćwiczeń. Odpowiadasz celnie, konkretnie i bardzo pod dane użytkownika. Maksymalnie 85 słów.',
+    chips:['Jak przebić plateau?','Kiedy zrobić deload?','Co poprawić w moim planie?','Oceń mój progres uczciwie']},
   injury:{hint:'Opisz kontuzję — AI doradzi ćwiczenia rehab i modyfikacje treningu.',
-    sys:'Jesteś fizjoterapeutą sportowym w aplikacji ForgePro. Odpowiadasz po polsku krótko i ostrożnie. Daj konkret, ostrzeż gdy trzeba iść do lekarza. Maksymalnie 80 słów.',
-    chips:['Ból barku przy OHP','Ból kolana przy przysiadach','Jak trenować z kontuzją?','Kiedy wróć do pełnego treningu?']},
+    sys:'Jesteś fizjoterapeutą sportowym pracującym z osobami trenującymi siłowo. Odpowiadasz ostrożnie, konkretnie i praktycznie. Jeśli są czerwone flagi, mów o tym jasno. Maksymalnie 90 słów.',
+    chips:['Ból barku przy OHP','Ból kolana przy przysiadach','Jak trenować z kontuzją?','Kiedy wrócić do pełnego treningu?']},
   nutrition:{hint:'Pytania o dietę, kalorie, białko i suplementy.',
-    sys:'Jesteś dietetykiem sportowym. Odpowiadasz po polsku praktycznie i zwięźle. Maksymalnie 70 słów.',
-    chips:['Ile białka dziennie?','Jaka dieta na masę?','Suplementy dla siłowni','Odżywka po treningu']},
+    sys:'Jesteś dietetykiem sportowym od sylwetki i wyników siłowych. Odpowiadasz praktycznie, bez moralizowania, z myśleniem o treningu użytkownika. Maksymalnie 80 słów.',
+    chips:['Ile białka dziennie?','Jaka dieta na masę?','Jak ciąć kalorie bez spadku siły?','Suplementy, które realnie działają']},
   plan:{hint:'AI ułoży lub oceni Twój plan treningowy.',
-    sys:'Jesteś programistą treningowym. Odpowiadasz po polsku profesjonalnie, ale krótko. Maksymalnie 90 słów.',
-    chips:['Ocen plan PPL','Ile dni na siłownię?','Push Pull Legs czy FBW?','Plan na siłę czy masę?']},
+    sys:'Jesteś bardzo dobrym programistą treningowym. Oceniasz plan po objętości, częstotliwości, doborze ćwiczeń, kolejności i regeneracji. Odpowiadasz krótko, ale z sensem. Maksymalnie 95 słów.',
+    chips:['Oceń ten plan bez słodzenia','Czy objętość nie jest za duża?','Push Pull Legs czy FBW?','Co zmienić w planie na masę?']},
 };
 
 function initAI(){
   setMode(document.querySelector('.ttab.on')||document.querySelector('.ttab'), 'coach');
   if(document.getElementById('chatWrap').children.length===0){
-    addMsg('ai','Jestem Twoim Pro Coachem. Pisz krótko, a ja odpowiem konkretnie.');
+    addMsg('ai','Jestem Twoim Pro Coachem. Napisz normalnie jak do trenera, a dam Ci konkretną odpowiedź pod Twoje dane.');
   }
 }
 

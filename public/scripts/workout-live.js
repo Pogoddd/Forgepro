@@ -726,3 +726,14 @@ function updateRestUI(){
   const fill = document.getElementById('restProgressFill');
   if(fill) fill.style.width = pct+'%';
 }
+
+// Override the earlier live-comment helper with a cleaner coach prompt.
+aiLiveComment = async function(ex, kg, reps){
+  const prev = getPrevPerf(ex.exerciseKey || ex.id);
+  const prompt = `Trening na zywo. Cwiczenie: ${cleanText(ex.name)}. Seria ${ex.sets.length}: ${kg}kg x ${reps}. ${prev ? `Poprzednio: ${prev}.` : 'Pierwsze podejscie.'} Daj 1 krotka, celna uwage jak dobry trener stojacy obok. Maksymalnie 18 slow.`;
+  try{
+    const r = await callAI(prompt,'Jestes trenerem na sali. Odpowiadasz jednym krotkim zdaniem, po polsku, konkretnie, z luzem i sensem. Bez cringe motywacji.');
+    const el = document.getElementById('liveAiTxt');
+    if(el) el.textContent = r;
+  }catch(e){}
+};
