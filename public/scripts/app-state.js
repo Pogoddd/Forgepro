@@ -10,6 +10,14 @@ function createDefaultState(){
     savedTemplates: [],
     importedPlans: [],
     bodyWeight: [],
+    userProfile: {
+      level: '',
+      goal: '',
+      trainingDays: '',
+      trainingExperience: '',
+      limitations: '',
+      coachStyle: ''
+    },
     meta: {version: 3}
   };
 }
@@ -54,6 +62,12 @@ function migrateState(raw){
     savedTemplates: Array.isArray(raw.savedTemplates) ? raw.savedTemplates : [],
     importedPlans: Array.isArray(raw.importedPlans) ? raw.importedPlans : [],
     bodyWeight: Array.isArray(raw.bodyWeight) ? raw.bodyWeight : [],
+    userProfile: raw.userProfile && typeof raw.userProfile === 'object'
+      ? {
+          ...createDefaultState().userProfile,
+          ...raw.userProfile
+        }
+      : createDefaultState().userProfile,
     meta: {version: 3}
   };
   return window.ExerciseLibrary?.normalizeAppData?.(migrated) || migrated;

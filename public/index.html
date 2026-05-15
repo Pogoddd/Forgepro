@@ -250,6 +250,68 @@
     <div class="ttab" onclick="setMode(this,'nutrition')">🥗 Dieta</div>
     <div class="ttab" onclick="setMode(this,'plan')">📅 Plan</div>
   </div>
+  <div class="card" style="margin:10px 14px 0;padding:14px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;">
+      <div>
+        <div class="card-label" style="margin-bottom:4px;">Profil dla Coacha</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5;">Powiedz coachowi kim jesteś, jaki masz cel i jak ma do Ciebie mówić. To da dużo lepsze odpowiedzi niż samo zgadywanie po treningach.</div>
+      </div>
+      <button class="btn btn-ghost" onclick="toggleCoachProfile()" style="width:auto;padding:9px 12px;font-size:12px;flex-shrink:0;">Edytuj</button>
+    </div>
+    <div id="coachProfileSummary" style="font-size:12px;color:var(--text);line-height:1.6;"></div>
+    <div id="coachProfileForm" style="display:none;margin-top:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label class="inp-label">Poziom</label>
+          <select class="inp" id="coachLevelInput">
+            <option value="">Wybierz</option>
+            <option value="początkujący">Początkujący</option>
+            <option value="średniozaawansowany">Średniozaawansowany</option>
+            <option value="zaawansowany">Zaawansowany</option>
+          </select>
+        </div>
+        <div>
+          <label class="inp-label">Cel</label>
+          <select class="inp" id="coachGoalInput">
+            <option value="">Wybierz</option>
+            <option value="masa">Masa</option>
+            <option value="redukcja">Redukcja</option>
+            <option value="siła">Siła</option>
+            <option value="rekompozycja">Rekompozycja</option>
+            <option value="ogólny progres">Ogólny progres</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label class="inp-label">Dni treningowe</label>
+          <input class="inp" id="coachDaysInput" placeholder="np. 4 dni / tydzień">
+        </div>
+        <div>
+          <label class="inp-label">Staż</label>
+          <input class="inp" id="coachExperienceInput" placeholder="np. 2 lata siłowni">
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label class="inp-label">Ograniczenia / ważny kontekst</label>
+        <textarea class="inp" id="coachLimitationsInput" rows="3" style="resize:vertical;padding-top:10px;" placeholder="np. bark czasem boli przy OHP, chcę unikać martwego, pracuję siedząco"></textarea>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label class="inp-label">Jak coach ma odpowiadać</label>
+        <select class="inp" id="coachStyleInput">
+          <option value="">Wybierz</option>
+          <option value="luźno i konkretnie">Luźno i konkretnie</option>
+          <option value="bardziej technicznie">Bardziej technicznie</option>
+          <option value="krótko i surowo">Krótko i surowo</option>
+          <option value="wspierająco">Wspierająco</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="toggleCoachProfile(false)" style="flex:1;">Anuluj</button>
+        <button class="btn btn-primary" onclick="saveCoachProfile()" style="flex:1;">Zapisz profil</button>
+      </div>
+    </div>
+  </div>
   <div id="modeHint" style="padding:8px 14px;font-size:12px;color:var(--muted);line-height:1.5;"></div>
 
   <div class="chat-wrap" id="chatWrap"></div>
@@ -1329,6 +1391,7 @@ function buildExerciseSnapshots(){
 }
 
 function inferUserProfile(){
+  const explicit = state.userProfile || {};
   const doneWorkouts = state.workouts.filter(w=>w.done);
   const totalWkts = doneWorkouts.length;
   const activeDays = new Set(doneWorkouts.map(w => new Date(w.startTime).toISOString().slice(0,10))).size;
@@ -1336,19 +1399,24 @@ function inferUserProfile(){
   const hasStrengthBase = snapshots.some(item => item.bestKg >= 100) || snapshots.length >= 8;
   const weightEntries = getSortedWeightEntries();
   const weightDelta = weightEntries.length >= 2 ? (weightEntries.at(-1).value - weightEntries[0].value) : 0;
-  const level = totalWkts < 8 ? 'początkujący' : totalWkts < 30 ? 'średniozaawansowany' : 'zaawansowany';
-  const tone = totalWkts < 8 ? 'bardziej wspierający i prosty' : hasStrengthBase ? 'bardziej konkretny i techniczny' : 'bardziej praktyczny i rzeczowy';
+  const inferredLevel = totalWkts < 8 ? 'początkujący' : totalWkts < 30 ? 'średniozaawansowany' : 'zaawansowany';
+  const level = cleanText(explicit.level, inferredLevel);
+  const tone = cleanText(explicit.coachStyle, totalWkts < 8 ? 'bardziej wspierający i prosty' : hasStrengthBase ? 'bardziej konkretny i techniczny' : 'bardziej praktyczny i rzeczowy');
   let likelyGoal = 'ogólny progres sylwetkowo-siłowy';
   if(weightEntries.length >= 3){
     if(weightDelta >= 1.2) likelyGoal = 'budowanie masy / zwiększanie wagi';
     else if(weightDelta <= -1.2) likelyGoal = 'redukcja / kontrola masy ciała';
   }
+  likelyGoal = cleanText(explicit.goal, likelyGoal);
   return {
     totalWkts,
     activeDays,
     level,
     tone,
-    likelyGoal
+    likelyGoal,
+    trainingDays: cleanText(explicit.trainingDays, activeDays ? `${activeDays} aktywnych dni` : ''),
+    trainingExperience: cleanText(explicit.trainingExperience, ''),
+    limitations: cleanText(explicit.limitations, '')
   };
 }
 
@@ -1370,7 +1438,10 @@ PROFIL UŻYTKOWNIKA:
 - Poziom: ${profile.level}
 - Łącznie treningów w appce: ${profile.totalWkts}
 - Aktywnych dni treningowych: ${profile.activeDays}
-- Prawdopodobny cel: ${profile.likelyGoal}`;
+- Prawdopodobny / zadeklarowany cel: ${profile.likelyGoal}
+- Deklarowane dni treningowe: ${profile.trainingDays || 'brak'}
+- Deklarowany staż: ${profile.trainingExperience || 'brak'}
+- Ograniczenia / ważny kontekst: ${profile.limitations || 'brak'}`;
 }
 
 function buildSystemContext(basePrompt){
@@ -1432,7 +1503,57 @@ const modeConfig={
     chips:['Oceń ten plan bez słodzenia','Czy objętość nie jest za duża?','Push Pull Legs czy FBW?','Co zmienić w planie na masę?']},
 };
 
+function renderCoachProfileSummary(){
+  const profile = state.userProfile || {};
+  const summary = document.getElementById('coachProfileSummary');
+  if(!summary) return;
+  const parts = [
+    profile.level ? `Poziom: <strong>${esc(profile.level)}</strong>` : '',
+    profile.goal ? `Cel: <strong>${esc(profile.goal)}</strong>` : '',
+    profile.trainingDays ? `Dni: <strong>${esc(profile.trainingDays)}</strong>` : '',
+    profile.trainingExperience ? `Staż: <strong>${esc(profile.trainingExperience)}</strong>` : '',
+    profile.coachStyle ? `Styl: <strong>${esc(profile.coachStyle)}</strong>` : ''
+  ].filter(Boolean);
+  summary.innerHTML = parts.length
+    ? parts.join(' · ') + (profile.limitations ? `<div style="margin-top:6px;color:var(--muted);">Kontekst: ${esc(profile.limitations)}</div>` : '')
+    : `<span style="color:var(--muted);">Profil nieuzupełniony. Coach będzie zgadywał z danych treningowych, więc warto go uzupełnić.</span>`;
+}
+
+function toggleCoachProfile(forceOpen){
+  const form = document.getElementById('coachProfileForm');
+  if(!form) return;
+  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : form.style.display === 'none';
+  form.style.display = shouldOpen ? 'block' : 'none';
+  if(shouldOpen){
+    const profile = state.userProfile || {};
+    document.getElementById('coachLevelInput').value = profile.level || '';
+    document.getElementById('coachGoalInput').value = profile.goal || '';
+    document.getElementById('coachDaysInput').value = profile.trainingDays || '';
+    document.getElementById('coachExperienceInput').value = profile.trainingExperience || '';
+    document.getElementById('coachLimitationsInput').value = profile.limitations || '';
+    document.getElementById('coachStyleInput').value = profile.coachStyle || '';
+  }
+}
+
+function saveCoachProfile(){
+  state.userProfile = {
+    level: cleanText(document.getElementById('coachLevelInput')?.value, ''),
+    goal: cleanText(document.getElementById('coachGoalInput')?.value, ''),
+    trainingDays: cleanText(document.getElementById('coachDaysInput')?.value, ''),
+    trainingExperience: cleanText(document.getElementById('coachExperienceInput')?.value, ''),
+    limitations: cleanText(document.getElementById('coachLimitationsInput')?.value, ''),
+    coachStyle: cleanText(document.getElementById('coachStyleInput')?.value, '')
+  };
+  save();
+  renderCoachProfileSummary();
+  toggleCoachProfile(false);
+  const wrap = document.getElementById('chatWrap');
+  if(wrap) wrap.innerHTML = '';
+  initAI();
+}
+
 function initAI(){
+  renderCoachProfileSummary();
   setMode(document.querySelector('.ttab.on')||document.querySelector('.ttab'), 'coach');
   if(document.getElementById('chatWrap').children.length===0){
     addMsg('ai','Jestem Twoim Pro Coachem. Napisz normalnie jak do trenera, a dam Ci konkretną odpowiedź pod Twoje dane.');
