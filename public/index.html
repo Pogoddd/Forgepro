@@ -1483,6 +1483,7 @@ function buildSystemContext(basePrompt){
   if(trends.length) context += `\n- Ostatnie trendy: ${trends.join(' | ')}`;
   if(avgWeight) context += `\n- Średnia waga z 7 dni: ${avgWeight} kg`;
   if(activeInjuries.length) context += `\n- Aktywne kontuzje: ${activeInjuries.join(', ')}`;
+  if(plans.length) context += `\n- Uwaga dla Coacha: zaimportowany plan może pochodzić od trenera użytkownika, więc oceniaj go rzeczowo i z szacunkiem, bez tanich wyroków.`;
   if(planInfo) context += `\n- Plan treningowy:\n${planInfo}`;
 
   return context;
@@ -1499,8 +1500,8 @@ const modeConfig={
     sys:'Jesteś dietetykiem sportowym od sylwetki i wyników siłowych. Odpowiadasz praktycznie, bez moralizowania, z myśleniem o treningu użytkownika. Maksymalnie 80 słów.',
     chips:['Ile białka dziennie?','Jaka dieta na masę?','Jak ciąć kalorie bez spadku siły?','Suplementy, które realnie działają']},
   plan:{hint:'AI ułoży lub oceni Twój plan treningowy.',
-    sys:'Jesteś bardzo dobrym programistą treningowym. Oceniasz plan po objętości, częstotliwości, doborze ćwiczeń, kolejności i regeneracji. Odpowiadasz krótko, ale z sensem. Maksymalnie 95 słów.',
-    chips:['Oceń ten plan bez słodzenia','Czy objętość nie jest za duża?','Push Pull Legs czy FBW?','Co zmienić w planie na masę?']},
+    sys:'Jesteś bardzo dobrym programistą treningowym. Oceniasz plan po objętości, częstotliwości, doborze ćwiczeń, kolejności i regeneracji, ale zawsze w kontekście celu, stażu, liczby dni i ograniczeń użytkownika. Nie nazywaj planu złym bez konkretnych powodów. Jeśli plan wygląda jak ułożony przez trenera, najpierw wskaż co jest sensowne, potem dopiero 1-2 rzeczy do sprawdzenia lub poprawy. Nie zakładaj automatycznie, że redukcja wymaga 4-5 treningów tygodniowo. Gdy danych jest za mało, zaznacz założenie zamiast wydawać pewny wyrok. Maksymalnie 110 słów.',
+    chips:['Oceń ten plan uczciwie','Co w tym planie jest okej?','Push Pull Legs czy FBW?','Co byś tu delikatnie poprawił?']},
 };
 
 function renderCoachProfileSummary(){
@@ -1556,7 +1557,7 @@ function initAI(){
   renderCoachProfileSummary();
   setMode(document.querySelector('.ttab.on')||document.querySelector('.ttab'), 'coach');
   if(document.getElementById('chatWrap').children.length===0){
-    addMsg('ai','Jestem Twoim Pro Coachem. Napisz normalnie jak do trenera, a dam Ci konkretną odpowiedź pod Twoje dane.');
+    addMsg('ai','Jestem Twoim Pro Coachem. Pisz normalnie, a odpowiem konkretnie pod Twój plan, cel i realne dane z apki.');
   }
 }
 
