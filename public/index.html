@@ -2007,33 +2007,180 @@ function processExcelFile(file){
   reader.readAsArrayBuffer(file);
 }
 
+function sanitizeParsedPlan(plan){
+  if(!plan || typeof plan !== 'object') return {planName:'Plan treningowy', days:[]};
+  const safeDays = Array.isArray(plan.days) ? plan.days.map(day => ({
+    dayName: cleanText(day?.dayName, 'Trening'),
+    exercises: Array.isArray(day?.exercises) ? day.exercises.map(ex => ({
+      name: cleanText(ex?.name, 'Cwiczenie'),
+      sets: Math.max(1, parseInt(ex?.sets, 10) || 3),
+      reps: cleanText(ex?.reps, '8-12'),
+      rest: cleanText(ex?.rest, ''),
+      tempo: cleanText(ex?.tempo, ''),
+      notes: cleanText(ex?.notes, '')
+    })) : []
+  })) : [];
+  return {
+    planName: cleanText(plan.planName, 'Plan treningowy'),
+    days: safeDays
+  };
+}
+
+function syncImportPlanField(path, value){
+  if(!parsedPlan) return;
+  const parts = path.split('.');
+  let target = parsedPlan;
+  for(let i = 0; i < parts.length - 1; i++){
+    target = target?.[parts[i]];
+    if(!target) return;
+  }
+  const key = parts[parts.length - 1];
+  if(key === 'sets'){
+    target[key] = Math.max(1, parseInt(value, 10) || 1);
+  } else {
+    target[key] = cleanText(value, key === 'reps' ? '8-12' : '');
+  }
+}
+
+function updateImportPlanField(path, value){
+  syncImportPlanField(path, value);
+}
+
+function addImportDay(){
+  if(!parsedPlan) return;
+  parsedPlan.days.push({
+    dayName: `Trening ${String.fromCharCode(65 + parsedPlan.days.length)}`,
+    exercises: [{name:'Nowe cwiczenie', sets:3, reps:'8-12', rest:'', tempo:'', notes:''}]
+  });
+  showImportPreview(parsedPlan);
+}
+
+function removeImportDay(dayIdx){
+  if(!parsedPlan) return;
+  parsedPlan.days.splice(dayIdx, 1);
+  if(!parsedPlan.days.length){
+    parsedPlan.days.push({
+      dayName:'Trening A',
+      exercises:[{name:'Nowe cwiczenie', sets:3, reps:'8-12', rest:'', tempo:'', notes:''}]
+    });
+  }
+  showImportPreview(parsedPlan);
+}
+
+function addImportExercise(dayIdx){
+  if(!parsedPlan?.days?.[dayIdx]) return;
+  parsedPlan.days[dayIdx].exercises.push({
+    name:'Nowe cwiczenie',
+    sets:3,
+    reps:'8-12',
+    rest:'',
+    tempo:'',
+    notes:''
+  });
+  showImportPreview(parsedPlan);
+}
+
+function removeImportExercise(dayIdx, exIdx){
+  if(!parsedPlan?.days?.[dayIdx]?.exercises?.[exIdx]) return;
+  parsedPlan.days[dayIdx].exercises.splice(exIdx, 1);
+  if(!parsedPlan.days[dayIdx].exercises.length){
+    parsedPlan.days[dayIdx].exercises.push({
+      name:'Nowe cwiczenie',
+      sets:3,
+      reps:'8-12',
+      rest:'',
+      tempo:'',
+      notes:''
+    });
+  }
+  showImportPreview(parsedPlan);
+}
+
 function showImportPreview(plan){
   updateImportStep(3);
-  const totalEx = plan.days.reduce((s,d)=>s+d.exercises.length,0);
+  parsedPlan = sanitizeParsedPlan(plan);
+  const totalEx = parsedPlan.days.reduce((s,d)=>s+d.exercises.length,0);
 
   document.getElementById('importContent').innerHTML = `
     <div style="padding:0 16px;">
       <div style="background:var(--green-dim);border:1px solid rgba(0,196,140,.3);border-radius:12px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--green);text-transform:uppercase;margin-bottom:4px;">✓ Plan rozpoznany</div>
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">${esc(plan.planName)}</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:4px;">${plan.days.length} dni treningowych · ${totalEx} ćwiczeń</div>
+        <div class="plan-preview-head">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--green);text-transform:uppercase;margin-bottom:4px;">✓ Plan rozpoznany — możesz go poprawić przed importem</div>
+            <input
+              class="plan-day-input"
+              value="${esc(parsedPlan.planName)}"
+              oninput="updateImportPlanField('planName', this.value)"
+              placeholder="Nazwa planu"
+              style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;"
+            >
+            <div style="font-size:13px;color:var(--muted);margin-top:6px;">${parsedPlan.days.length} dni treningowych · ${totalEx} ćwiczeń</div>
+          </div>
+          <div class="plan-day-actions">
+            <button class="plan-icon-btn" onclick="addImportDay()">+ Dzień</button>
+          </div>
+        </div>
+        <div class="plan-helper">Popraw nazwę dnia, ćwiczenia, serie, powtórzenia i notatkę, jeśli AI coś źle odczytało.</div>
       </div>
 
-      <div style="max-height:340px;overflow-y:auto;margin-bottom:14px;">
-        ${plan.days.map(day=>`
+      <div class="plan-preview-grid">
+        ${parsedPlan.days.map((day, dayIdx)=>`
           <div class="plan-day-card">
-            <div class="plan-day-title">${esc(day.dayName)}</div>
-            ${day.exercises.map(ex=>`
+            <div class="plan-day-toolbar" style="margin-bottom:10px;">
+              <input
+                class="plan-day-input"
+                value="${esc(day.dayName)}"
+                oninput="updateImportPlanField('days.${dayIdx}.dayName', this.value)"
+                placeholder="Nazwa dnia"
+              >
+              <div class="plan-day-actions">
+                <button class="plan-icon-btn" onclick="addImportExercise(${dayIdx})">+ Ćwiczenie</button>
+                <button class="plan-icon-btn danger" onclick="removeImportDay(${dayIdx})">Usuń dzień</button>
+              </div>
+            </div>
+            ${day.exercises.map((ex, exIdx)=>`
               <div class="plan-ex-row">
-                <div>
-                  <div style="font-weight:600;">${esc(ex.name)}</div>
-                  ${ex.notes?`<div class="plan-ex-sets">${ex.notes}</div>`:''}
+                <div style="flex:1;min-width:0;">
+                  <div class="plan-ex-edit">
+                    <input
+                      class="plan-ex-input"
+                      value="${esc(ex.name)}"
+                      oninput="updateImportPlanField('days.${dayIdx}.exercises.${exIdx}.name', this.value)"
+                      placeholder="Nazwa ćwiczenia"
+                    >
+                    <input
+                      class="plan-mini-input"
+                      type="number"
+                      min="1"
+                      value="${ex.sets}"
+                      oninput="updateImportPlanField('days.${dayIdx}.exercises.${exIdx}.sets', this.value)"
+                      placeholder="Serie"
+                    >
+                    <input
+                      class="plan-mini-input"
+                      value="${esc(ex.reps)}"
+                      oninput="updateImportPlanField('days.${dayIdx}.exercises.${exIdx}.reps', this.value)"
+                      placeholder="Powt."
+                    >
+                  </div>
+                  <input
+                    class="plan-note-input"
+                    value="${esc(ex.notes || '')}"
+                    oninput="updateImportPlanField('days.${dayIdx}.exercises.${exIdx}.notes', this.value)"
+                    placeholder="Notatka opcjonalna: np. superseria, tempo, uwaga od trenera"
+                  >
                 </div>
-                <div style="text-align:right;flex-shrink:0;margin-left:12px;">
-                  <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;">${ex.sets}×${ex.reps}</div>
+                <div class="plan-ex-actions">
+                  <button class="plan-icon-btn danger" onclick="removeImportExercise(${dayIdx}, ${exIdx})">Usuń</button>
                 </div>
               </div>
             `).join('')}
+            <div class="plan-add-row">
+              <div class="plan-helper">Dni i ćwiczenia możesz dowolnie poprawić przed finalnym importem.</div>
+              <div class="plan-add-inline">
+                <button class="plan-icon-btn" onclick="addImportExercise(${dayIdx})">+ Ćwiczenie</button>
+              </div>
+            </div>
           </div>
         `).join('')}
       </div>

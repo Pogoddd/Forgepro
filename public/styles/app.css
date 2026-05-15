@@ -587,6 +587,54 @@ select.inp option{background:var(--surface2);}
 }
 .plan-ex-row:last-child{border:none;}
 .plan-ex-sets{font-size:11px;color:var(--muted);margin-top:2px;}
+.plan-preview-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;
+}
+.plan-preview-grid{
+  display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;margin-bottom:14px;
+}
+.plan-day-toolbar,.plan-ex-toolbar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.plan-day-input,.plan-ex-input,.plan-mini-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:'DM Sans',sans-serif;outline:none;
+}
+.plan-day-input{
+  padding:10px 12px;font-size:15px;font-weight:700;
+}
+.plan-ex-edit{
+  display:grid;grid-template-columns:minmax(0,1.6fr) 58px 74px;gap:8px;align-items:center;flex:1;
+}
+.plan-ex-input{
+  padding:9px 10px;font-size:13px;font-weight:600;
+}
+.plan-mini-input{
+  padding:9px 8px;font-size:13px;font-weight:700;text-align:center;
+}
+.plan-note-input{
+  width:100%;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.5;padding:10px 12px;outline:none;
+}
+.plan-day-actions,.plan-ex-actions{
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.plan-icon-btn{
+  width:auto;padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);font:700 11px 'DM Sans',sans-serif;cursor:pointer;
+}
+.plan-icon-btn.danger{
+  color:#ff9b9b;border-color:rgba(255,122,122,.2);
+}
+.plan-add-row{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:10px;margin-top:8px;border-top:1px solid var(--border);
+}
+.plan-add-inline{
+  display:flex;gap:8px;flex-wrap:wrap;
+}
+.plan-helper{
+  font-size:11px;color:var(--muted);line-height:1.5;
+}
 
 .step-indicator{
   display:flex;align-items:center;gap:0;
