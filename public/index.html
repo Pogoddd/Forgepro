@@ -534,10 +534,18 @@ function renderWorkoutsScreen(){
     html += `<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">📊 Od trenera</div>`;
     importedPlans.forEach(plan=>{
       plan.days.forEach(day=>{
-        html += `<div class="wkt-template-card" onclick="startFromImportedPlan(${plan.id},'${encodeInlineArg(day.dayName)}')">
-          <div class="wkt-template-name">${esc(day.dayName)}</div>
-          <div class="wkt-template-meta">${esc(plan.planName)} · ${day.exercises.length} ćwiczeń</div>
-          <div class="wkt-ex-chips">${day.exercises.slice(0,4).map(e=>`<div class="wkt-ex-chip">${shortLabel(e.name,3)}</div>`).join('')}${day.exercises.length>4?`<div class="wkt-ex-chip">+${day.exercises.length-4}</div>`:''}</div>
+        html += `<div class="wkt-template-card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+            <div style="flex:1;min-width:0;cursor:pointer;" onclick="startFromImportedPlan(${plan.id},'${encodeInlineArg(day.dayName)}')">
+              <div class="wkt-template-name">${esc(day.dayName)}</div>
+              <div class="wkt-template-meta">${esc(plan.planName)} · ${day.exercises.length} ćwiczeń</div>
+              <div class="wkt-ex-chips">${day.exercises.slice(0,4).map(e=>`<div class="wkt-ex-chip">${shortLabel(e.name,3)}</div>`).join('')}${day.exercises.length>4?`<div class="wkt-ex-chip">+${day.exercises.length-4}</div>`:''}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              <button class="plan-icon-btn" onclick="renameImportedPlanDay(${plan.id},'${encodeInlineArg(day.dayName)}')">Edytuj</button>
+              <button class="plan-icon-btn danger" onclick="deleteImportedPlanDay(${plan.id},'${encodeInlineArg(day.dayName)}')">Usuń</button>
+            </div>
+          </div>
         </div>`;
       });
     });
@@ -2286,13 +2294,17 @@ function renderImportedPlans(){
           </div>
           <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;">
             ${plan.days.map(day=>`
-              <button onclick="startFromImportedPlan(${plan.id},'${encodeInlineArg(day.dayName)}')"
-                style="flex-shrink:0;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;text-align:left;transition:all .15s;"
-                onmouseover="this.style.borderColor='var(--orange)';this.style.background='var(--orange-dim)'"
-                onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'">
-                <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;">${esc(day.dayName)}</div>
-                <div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;">${day.exercises.length} ćwiczeń</div>
-              </button>
+              <div style="flex-shrink:0;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;min-width:168px;">
+                <button onclick="startFromImportedPlan(${plan.id},'${encodeInlineArg(day.dayName)}')"
+                  style="display:block;width:100%;background:none;border:none;padding:0;cursor:pointer;text-align:left;">
+                  <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;">${esc(day.dayName)}</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;">${day.exercises.length} ćwiczeń</div>
+                </button>
+                <div style="display:flex;gap:6px;margin-top:8px;">
+                  <button class="plan-icon-btn" style="padding:7px 10px;" onclick="renameImportedPlanDay(${plan.id},'${encodeInlineArg(day.dayName)}')">Edytuj</button>
+                  <button class="plan-icon-btn danger" style="padding:7px 10px;" onclick="deleteImportedPlanDay(${plan.id},'${encodeInlineArg(day.dayName)}')">Usuń</button>
+                </div>
+              </div>
             `).join('')}
           </div>
         </div>
@@ -2300,6 +2312,31 @@ function renderImportedPlans(){
     </div>
   `;
   container.parentNode.insertBefore(section, container.nextSibling);
+}
+
+function renameImportedPlanDay(planId, encodedDayName){
+  const dayName = decodeURIComponent(encodedDayName);
+  const plan = state.importedPlans?.find(p=>p.id===planId);
+  const day = plan?.days?.find(d=>d.dayName===dayName);
+  if(!plan || !day) return;
+  const nextName = cleanText(prompt('Nowa nazwa dnia treningowego:', day.dayName), '');
+  if(!nextName || nextName === day.dayName) return;
+  day.dayName = nextName;
+  save();
+  renderHome();
+  renderWorkoutsScreen();
+}
+
+function deleteImportedPlanDay(planId, encodedDayName){
+  const dayName = decodeURIComponent(encodedDayName);
+  const plan = state.importedPlans?.find(p=>p.id===planId);
+  if(!plan) return;
+  if(!confirm(`Usunąć dzień "${dayName}" z planu "${plan.planName}"?`)) return;
+  plan.days = (plan.days || []).filter(d=>d.dayName !== dayName);
+  state.importedPlans = (state.importedPlans || []).filter(p => p.id !== planId || p.days.length > 0);
+  save();
+  renderHome();
+  renderWorkoutsScreen();
 }
 
 function startFromImportedPlan(planId, encodedDayName){
