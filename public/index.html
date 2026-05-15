@@ -1834,6 +1834,7 @@ function parsePdfExerciseLine(line){
   const tempoMatch = rest.match(/\b(\d+)\/([0X])\/([X\d])\/([0-9])\b/);
 
   let name, sets = 3, reps = '8-12', tempo = '', restTime = '';
+  let hasBackOff = false;
 
   if(tempoMatch){
     // Everything before the tempo-adjacent number block is the name
@@ -1897,8 +1898,8 @@ function parsePdfExerciseLine(line){
   if(sSeriesMatch){
     sets = parseInt(sSeriesMatch[1]);
     reps = sSeriesMatch[2];
-    const backOff = rest.includes('Back off') ? ' +1 back off' : '';
-    reps += backOff;
+    hasBackOff = /back\s*off/i.test(rest) || /[pP]/.test(rest);
+    if(hasBackOff) sets += 1;
   }
 
   if(!name || name.length < 3) return null;
@@ -1908,13 +1909,19 @@ function parsePdfExerciseLine(line){
   if(NON_EX.some(n => name.toUpperCase().includes(n))) return null;
   if(name.length > 100) return null;
 
+  const setPlan = Array.from({length: sets}, (_, idx) => ({
+    type: hasBackOff && idx === sets - 1 ? 'backoff' : 'normal',
+    reps
+  }));
+
   return {
     name,
     sets: isNaN(sets) ? 3 : sets,
     reps: reps || '8-12',
     rest: restTime,
     tempo,
-    notes: isSuper ? '🔗 Superseria' : ''
+    notes: `${isSuper ? '🔗 Superseria ' : ''}${hasBackOff ? 'Back off' : ''}`.trim(),
+    setPlan
   };
 }
 
@@ -2439,13 +2446,14 @@ function directParsePlan(wb){
       // Parse sets — format "2S6-8P" = 2 serie + back off (back off liczymy jako normalną serię)
       const setsRaw = colSets >= 0 ? row[colSets] : null;
       let sets = 3;
+      let hasBackOff = false;
       if(setsRaw !== null && setsRaw !== undefined){
         const setsStr = String(setsRaw).trim();
         // Format "2S6-8P" lub "3S8P" — numer przed S to serie, P to back off = +1 seria
         const backOffMatch = setsStr.match(/^(\d+)[sS]/);
         if(backOffMatch){
           const mainSets = parseInt(backOffMatch[1]);
-          const hasBackOff = /[pP]/.test(setsStr);
+          hasBackOff = /[pP]/.test(setsStr) || /back\s*off/i.test(setsStr);
           sets = hasBackOff ? mainSets + 1 : mainSets;
         } else {
           sets = Math.round(parseFloat(setsStr)) || 3;
@@ -2467,10 +2475,14 @@ function directParsePlan(wb){
       // Superserie detection (LP column: 5A, 5B, 3A, 3B etc.)
       const lpCell = row[0] ? String(row[0]).trim() : '';
       const isSuper = /^\d+[AB]$/i.test(lpCell);
-      const notes = isSuper ? '🔗 Superseria' : '';
+      const notes = `${isSuper ? '🔗 Superseria ' : ''}${hasBackOff ? 'Back off' : ''}`.trim();
+      const setPlan = Array.from({length: sets}, (_, idx) => ({
+        type: hasBackOff && idx === sets - 1 ? 'backoff' : 'normal',
+        reps
+      }));
 
       if(sets > 0 && exName.length > 2){
-        currentDay.exercises.push({name:exName, sets, reps, rest, tempo, notes});
+        currentDay.exercises.push({name:exName, sets, reps, rest, tempo, notes, setPlan});
       }
     }
 

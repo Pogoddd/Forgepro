@@ -33,13 +33,13 @@ function updateMainActionBtn(tab){
   }
   if(tab==='log'){
     const totalLogged = wkt ? wkt.exercises.reduce((sum, ex) => sum + ex.sets.length, 0) : 0;
-    const totalPlanned = wkt ? wkt.exercises.reduce((sum, ex) => sum + Math.max(ex.plannedSets || 3, ex.sets.length), 0) : 0;
+    const totalPlanned = wkt ? wkt.exercises.reduce((sum, ex) => sum + Math.max(getExerciseSetPlan(ex).length, ex.sets.length), 0) : 0;
     btn.textContent = `${totalLogged}/${totalPlanned} ZAPISZ`;
     btn.className='btn btn-primary';
     btn.style.background = '';
     btn.onclick=confirmFinish;
   } else if(tab==='info'){
-    const allDone = wkt?.exercises.every(e=>e.sets.length>=(e.plannedSets||3));
+    const allDone = wkt?.exercises.every(e=>e.sets.length>=Math.max(getExerciseSetPlan(e).length, e.plannedSets||3));
     if(allDone){
       btn.textContent='🏁 Zakończ trening';
       btn.className='btn btn-primary';
@@ -64,7 +64,7 @@ function renderInfoTab(){
   if(!wkt) return;
   const ICONS = {'Klatka':'🫁','Plecy':'🔙','Nogi':'🦵','Barki':'💪','Biceps':'💪','Triceps':'💪','Core':'🔥','Custom':'⚡','—':'⚡'};
   document.getElementById('exOverviewList').innerHTML = wkt.exercises.map((ex,i)=>{
-    const totalSets = ex.plannedSets || 3;
+    const totalSets = Math.max(getExerciseSetPlan(ex).length, ex.plannedSets || 3);
     const doneSets = ex.sets.length;
     const icon = ICONS[ex.cat] || '🏋️';
     const allDone = doneSets >= totalSets;
@@ -75,7 +75,7 @@ function renderInfoTab(){
           <div style="flex:1;min-width:0;">
             <div style="font-weight:700;font-size:15px;margin-bottom:2px;line-height:1.3;">${esc(ex.name)}</div>
             ${ex.notes?`<div style="font-size:11px;color:var(--orange);margin-bottom:2px;">${ex.notes}</div>`:''}
-            <div style="font-size:12px;color:var(--muted);">${ex.plannedSets||3} serie · ${ex.plannedReps||'8-12'} powt.${ex.rest?' · '+ex.rest:''}</div>
+            <div style="font-size:12px;color:var(--muted);">${buildPlanSummary(ex)}${ex.rest?' · '+ex.rest:''}</div>
           </div>
           <div style="flex-shrink:0;text-align:right;">
             <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:${allDone?'var(--green)':doneSets>0?'var(--orange)':'var(--muted)'};">${doneSets}/${totalSets}</div>
@@ -168,12 +168,55 @@ function getDraftValues(ex, rowIdx){
   };
 }
 
+function getExerciseSetPlan(ex){
+  if(Array.isArray(ex.setPlan) && ex.setPlan.length){
+    return ex.setPlan;
+  }
+  const totalSets = Math.max(ex.plannedSets || 3, ex.sets.length || 0, 1);
+  return Array.from({length: totalSets}, (_, idx) => ({
+    idx,
+    type: 'normal',
+    reps: cleanText(ex.plannedReps || '8-12')
+  }));
+}
+
+function getSetTypeMeta(type){
+  const normalized = cleanText(type || 'normal').toLowerCase();
+  if(normalized === 'backoff'){
+    return {key:'backoff', short:'B', label:'Back off'};
+  }
+  return {key:'normal', short:'1', label:'Normalna seria'};
+}
+
+function buildPlanSummary(ex){
+  const plan = getExerciseSetPlan(ex);
+  const groups = [];
+  plan.forEach(item => {
+    const meta = getSetTypeMeta(item.type);
+    const last = groups[groups.length - 1];
+    if(last && last.type === meta.key && last.reps === cleanText(item.reps || ex.plannedReps || '8-12')){
+      last.count += 1;
+      return;
+    }
+    groups.push({
+      type: meta.key,
+      label: meta.label,
+      reps: cleanText(item.reps || ex.plannedReps || '8-12'),
+      count: 1
+    });
+  });
+  return groups.map(group => {
+    if(group.type === 'backoff') return `${group.count} × back off`;
+    return `${group.count} × ${group.reps || '8-12'}`;
+  }).join(' · ');
+}
+
 function countWorkoutSets(){
   const wkt = state.currentWorkout;
   if(!wkt) return {logged:0, planned:0};
   return {
     logged: wkt.exercises.reduce((sum, ex) => sum + ex.sets.length, 0),
-    planned: wkt.exercises.reduce((sum, ex) => sum + Math.max(ex.plannedSets || 3, ex.sets.length), 0)
+    planned: wkt.exercises.reduce((sum, ex) => sum + Math.max(getExerciseSetPlan(ex).length, ex.sets.length), 0)
   };
 }
 
@@ -186,11 +229,16 @@ function getLogRowState(ex, rowIdx, prevSets){
   const prevSet = prevSets[rowIdx] || prevSets[prevSets.length-1];
   const draft = getDraftValues(ex, rowIdx);
   const repsFallback = getPlannedRepsFallback(ex);
+  const setPlan = getExerciseSetPlan(ex);
+  const plannedRow = setPlan[rowIdx] || setPlan[setPlan.length - 1] || {type:'normal', reps: ex.plannedReps || ''};
+  const typeMeta = getSetTypeMeta(plannedRow.type);
   return {
     loggedSet,
     prevSet,
     draft,
     repsFallback,
+    plannedRow,
+    typeMeta,
     hasHistory: Boolean(prevSet),
     isLogged: Boolean(loggedSet)
   };
@@ -206,7 +254,7 @@ function renderLogRow(ex, exIdx, rowIdx, prevSets){
 
   return `
     <div class="log-grid-row ${rowStateClass}">
-      <div class="log-set-badge">${rowIdx+1}</div>
+      <div class="log-set-badge ${row.typeMeta.key === 'backoff' ? 'is-backoff' : ''}">${row.typeMeta.key === 'backoff' ? row.typeMeta.short : rowIdx+1}</div>
       <div class="log-prev ${row.hasHistory?'':'empty'}">${row.hasHistory?`${row.prevSet.kg} kg x ${row.prevSet.reps}`:'Brak historii'}</div>
       <input
         id="log-kg-${exIdx}-${rowIdx}"
@@ -225,7 +273,7 @@ function renderLogRow(ex, exIdx, rowIdx, prevSets){
         type="number"
         min="1"
         inputmode="numeric"
-        placeholder="${row.repsFallback || 'powt.'}"
+        placeholder="${cleanText(row.plannedRow.reps || row.repsFallback || 'powt.')}"
         value="${row.isLogged ? row.loggedSet.reps : row.draft.reps}"
         ${row.isLogged ? 'disabled' : ''}
       >
@@ -238,9 +286,11 @@ function renderLogRow(ex, exIdx, rowIdx, prevSets){
 
 function renderLogCard(ex, exIdx){
   const prevSets = getExerciseHistorySets(ex);
-  const totalRows = Math.max(ex.plannedSets || 3, ex.sets.length);
+  const setPlan = getExerciseSetPlan(ex);
+  const totalRows = Math.max(setPlan.length || ex.plannedSets || 3, ex.sets.length);
   const isCurrent = exIdx === state.currentExIdx;
   const thumb = getExerciseThumb(ex);
+  const summary = buildPlanSummary(ex);
 
   return `
     <div id="log-card-${exIdx}" class="log-card ${isCurrent?'current':''}">
@@ -249,7 +299,7 @@ function renderLogCard(ex, exIdx){
           <div class="log-thumb">${thumb}</div>
           <div style="min-width:0;flex:1;">
             <div class="log-card-name">${esc(ex.name)}</div>
-            <div class="log-card-plan">${ex.plannedSets||3} serii &middot; ${esc(ex.plannedReps||'8-12')} powt.${ex.rest?` &middot; ${esc(ex.rest)} przerwy`:''}</div>
+            <div class="log-card-plan">${summary}${ex.rest?` &middot; ${esc(ex.rest)} przerwy`:''}</div>
           </div>
         </div>
         <div class="log-card-count">
@@ -257,7 +307,13 @@ function renderLogCard(ex, exIdx){
           <span>serii</span>
         </div>
       </div>
-      ${ex.notes?`<div class="log-note">${esc(ex.notes)}</div>`:''}
+      <div class="log-note is-summary">
+        <div class="log-note-copy">
+          <span>${esc(summary || `${totalRows} × ${ex.plannedReps || '8-12'}`)}</span>
+          ${ex.notes ? `<strong>${esc(ex.notes)}</strong>` : ''}
+        </div>
+        <button class="log-note-tag" type="button">${Array.isArray(setPlan) && setPlan.some(item => item.type === 'backoff') ? 'Back off' : 'Plan'}</button>
+      </div>
       <div class="log-grid-wrap">
         <div class="log-grid-head">
           <div>Seria</div>
@@ -318,7 +374,7 @@ function confirmFinish(){
   const totalSets = wkt.exercises.reduce((s,e)=>s+e.sets.length,0);
   const doneExs = wkt.exercises.filter(e=>e.sets.length>0);
   const skippedExs = wkt.exercises.filter(e=>e.sets.length===0);
-  const allDone = wkt.exercises.every(e=>e.sets.length>=(e.plannedSets||3));
+  const allDone = wkt.exercises.every(e=>e.sets.length>=Math.max(getExerciseSetPlan(e).length, e.plannedSets||3));
 
   if(totalSets === 0){
     showFinishModal(0, [], wkt.exercises);
@@ -406,7 +462,8 @@ function getPrevPerf(exId){
 
 function logExerciseSet(ex, kg, reps){
   if(reps===0) return;
-  ex.sets.push({kg,reps,time:Date.now()});
+  const nextPlan = getExerciseSetPlan(ex)[ex.sets.length] || {type:'normal'};
+  ex.sets.push({kg,reps,type: nextPlan.type || 'normal', time:Date.now()});
   save();
   renderLogTab();
   renderInfoTab();
@@ -455,7 +512,13 @@ function addInlineSetRow(exIdx){
   const wkt = state.currentWorkout;
   const ex = wkt?.exercises[exIdx];
   if(!ex) return;
-  ex.plannedSets = Math.max(ex.plannedSets || 3, ex.sets.length + 1);
+  const currentPlan = getExerciseSetPlan(ex);
+  ex.plannedSets = Math.max(currentPlan.length, ex.sets.length) + 1;
+  ex.setPlan = [...currentPlan];
+  ex.setPlan.push({
+    type: 'normal',
+    reps: cleanText(ex.plannedReps || getPlannedRepsFallback(ex) || '8-12')
+  });
   state.currentExIdx = exIdx;
   save();
   renderLogTab();

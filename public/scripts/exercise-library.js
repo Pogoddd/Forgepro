@@ -131,9 +131,38 @@
     return {
       kg: Number.isFinite(kg) && kg >= 0 ? kg : 0,
       reps: Number.isFinite(reps) && reps > 0 ? reps : 0,
+      type: text(set?.type || 'normal').toLowerCase() === 'backoff' ? 'backoff' : 'normal',
       ...(Number.isFinite(rpe) && rpe > 0 ? {rpe} : {}),
       ...(set?.time ? {time: set.time} : {})
     };
+  }
+
+  function detectSetPlan(exercise){
+    if(Array.isArray(exercise?.setPlan) && exercise.setPlan.length){
+      return exercise.setPlan.map((set, idx) => ({
+        idx,
+        type: text(set?.type || 'normal').toLowerCase() === 'backoff' ? 'backoff' : 'normal',
+        reps: text(set?.reps || exercise?.plannedReps || '8-12')
+      }));
+    }
+
+    const plannedSets = Number.isFinite(Number(exercise?.plannedSets))
+      ? Number(exercise.plannedSets)
+      : (Number.isFinite(Number(exercise?.sets)) ? Number(exercise.sets) : 3);
+    const reps = text(exercise?.plannedReps || exercise?.reps || '8-12');
+    const notes = text(exercise?.notes || '').toLowerCase();
+    const repsText = reps.toLowerCase();
+    const hasBackoff = notes.includes('back off') || notes.includes('backoff') || repsText.includes('back off') || repsText.includes('backoff');
+    const plan = [];
+    for(let i = 0; i < Math.max(1, plannedSets); i++){
+      const isBackoff = hasBackoff && i === Math.max(1, plannedSets) - 1;
+      plan.push({
+        idx: i,
+        type: isBackoff ? 'backoff' : 'normal',
+        reps
+      });
+    }
+    return plan;
   }
 
   function enrichExercise(exercise, options={}){
@@ -157,6 +186,11 @@
       sets: Array.isArray(exercise?.sets) ? exercise.sets.map(sanitizeSet).filter(set => set.reps > 0) : [],
       plannedSets: plannedSetsValue,
       plannedReps: text(exercise?.plannedReps || exercise?.reps || ''),
+      setPlan: detectSetPlan({
+        ...exercise,
+        plannedSets: plannedSetsValue,
+        plannedReps: text(exercise?.plannedReps || exercise?.reps || '')
+      }),
       notes: text(exercise?.notes || ''),
       rest: text(exercise?.rest || '')
     };
