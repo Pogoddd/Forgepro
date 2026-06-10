@@ -571,14 +571,13 @@ select.inp option{background:var(--surface2);}
 }
 .weight-form{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  gap:8px;
+  grid-template-columns:1fr;
+  gap:10px;
   align-items:end;
   margin-bottom:12px;
 }
 .weight-form > *{min-width:0;}
 .weight-form .btn{
-  grid-column:1 / -1;
   width:100% !important;
 }
 .weight-list{
