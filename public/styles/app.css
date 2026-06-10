@@ -577,6 +577,19 @@ select.inp option{background:var(--surface2);}
   margin-bottom:12px;
 }
 .weight-form > *{min-width:0;}
+.weight-form .inp{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+.weight-form input[type="date"]{
+  -webkit-appearance:none;
+  appearance:none;
+}
+.weight-form input[type="date"]::-webkit-date-and-time-value{
+  text-align:left;
+}
 .weight-form .btn{
   width:100% !important;
 }
