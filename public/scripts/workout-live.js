@@ -130,13 +130,45 @@ function getPrevExerciseSets(exId){
   return [];
 }
 
+function normalizeHistoryName(value){
+  return cleanText(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getHistoryIdentity(ex){
+  const display = normalizeHistoryName(ex?.name || ex?.displayName || '');
+  const canonical = normalizeHistoryName(ex?.canonicalName || '');
+  const key = cleanText(ex?.exerciseKey || ex?.id || '');
+  return {key, display, canonical};
+}
+
+function isSameExerciseHistory(candidate, current){
+  const cand = getHistoryIdentity(candidate);
+  const cur = getHistoryIdentity(current);
+  if(!cand.key && !cand.display) return false;
+
+  if(cur.key && cand.key && cand.key === cur.key){
+    if(cur.key.startsWith('custom:')) return cand.display === cur.display;
+    return true;
+  }
+
+  if(cur.display && cand.display && cand.display === cur.display) return true;
+  if(cur.canonical && cand.canonical && cand.canonical === cur.canonical) return true;
+  return false;
+}
+
 function getPrevExerciseSetsByName(exName){
-  const target = window.ExerciseLibrary?.getExerciseKey?.(exName) || cleanText(exName).toLowerCase();
+  const target = normalizeHistoryName(exName);
   if(!target) return [];
   const history = state.workouts.filter(w=>w.done);
   for(let i=history.length-1;i>=0;i--){
     const ex = history[i].exercises.find(e=>{
-      const candidate = window.ExerciseLibrary?.getExerciseKey?.(e) || cleanText(e.name).toLowerCase();
+      const candidate = normalizeHistoryName(e.name || e.displayName || e.canonicalName || '');
       return candidate === target;
     });
     if(ex && ex.sets.length>0 && !ex.skipped){
@@ -147,8 +179,13 @@ function getPrevExerciseSetsByName(exName){
 }
 
 function getExerciseHistorySets(ex){
-  const byId = getPrevExerciseSets(ex.exerciseKey || ex.id);
-  if(byId.length) return byId;
+  const history = state.workouts.filter(w=>w.done);
+  for(let i=history.length-1;i>=0;i--){
+    const matched = history[i].exercises.find(item =>
+      item && item.sets?.length > 0 && !item.skipped && isSameExerciseHistory(item, ex)
+    );
+    if(matched) return matched.sets;
+  }
   return getPrevExerciseSetsByName(ex.name);
 }
 
@@ -161,10 +198,9 @@ function getPlannedRepsFallback(ex){
 function getDraftValues(ex, rowIdx){
   const prevSets = getExerciseHistorySets(ex);
   const prevRow = prevSets[rowIdx] || prevSets[prevSets.length-1];
-  const lastLogged = ex.sets[ex.sets.length-1];
   return {
-    kg: lastLogged?.kg ?? prevRow?.kg ?? '',
-    reps: lastLogged?.reps ?? prevRow?.reps ?? getPlannedRepsFallback(ex)
+    kg: prevRow?.kg ?? '',
+    reps: prevRow?.reps ?? getPlannedRepsFallback(ex)
   };
 }
 

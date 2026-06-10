@@ -350,25 +350,30 @@
     <div style="font-size:11px;color:var(--muted);">Progres</div>
   </div>
 
+  <div class="progress-overview" id="progressOverview"></div>
+
   <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-      <div class="card-label" style="margin:0;">Ćwiczenie</div>
-      <select class="inp" id="chartExercise" style="width:auto;padding:5px 10px;font-size:13px;" onchange="renderChart()"></select>
+    <div class="progress-card-head">
+      <div>
+        <div class="card-label" style="margin-bottom:4px;">Trend siłowy</div>
+        <div class="progress-card-sub">Najlepszy ciężar z ostatnich sesji dla wybranego ćwiczenia.</div>
+      </div>
+      <select class="inp progress-select" id="chartExercise" onchange="renderChart()"></select>
     </div>
     <div class="chart-wrap" id="chartBars"></div>
     <div class="chart-xlabels" id="chartLabels"></div>
-    <div id="chartMeta" style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--muted);"></div>
+    <div class="progress-meta" id="chartMeta"></div>
   </div>
 
   <div class="card">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
+    <div class="progress-card-head">
       <div>
         <div class="card-label" style="margin-bottom:4px;">Waga ciała</div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.5;">Dodawaj wagę codziennie i obserwuj realny trend, a nie pojedyncze skoki.</div>
+        <div class="progress-card-sub">Trend z ostatnich wpisów, bez paniki po jednym pomiarze.</div>
       </div>
-      <div id="weightTrendSummary" style="text-align:right;flex-shrink:0;"></div>
+      <div class="progress-big-value" id="weightTrendSummary"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:12px;">
+    <div class="weight-form">
       <div>
         <label class="inp-label">Data</label>
         <input class="inp" id="weightDateInput" type="date" onchange="renderWeightTracking(this.value)">
@@ -381,11 +386,11 @@
     </div>
     <div class="chart-wrap" id="weightChartBars"></div>
     <div class="chart-xlabels" id="weightChartLabels"></div>
-    <div id="weightChartMeta" style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--muted);"></div>
-    <div id="weightRecentList" style="display:flex;flex-direction:column;gap:8px;margin-top:14px;"></div>
+    <div class="progress-meta" id="weightChartMeta"></div>
+    <div class="weight-list" id="weightRecentList"></div>
   </div>
 
-  <div class="card">
+  <div class="card progress-ai-card">
     <div class="ai-label"><span class="ai-dot"></span>Analiza AI</div>
     <p id="progAiTxt" style="font-size:13px;line-height:1.6;color:var(--text);">Zacznij trenować — AI przeanalizuje Twój progres.</p>
   </div>
@@ -393,7 +398,7 @@
   <!-- PRs -->
   <div class="card">
     <div class="card-label">Rekordy osobiste</div>
-    <div id="prList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="pr-list" id="prList"></div>
   </div>
 
   <!-- Injuries -->
@@ -1118,11 +1123,51 @@ function renderProgress(){
   const prev=sel.value;
   sel.innerHTML=[...labelsByKey.entries()].map(([key,label])=>`<option value="${esc(key)}"${key===prev?' selected':''}>${esc(label)}</option>`).join('');
   if(!sel.value&&labelsByKey.size>0) sel.value=[...labelsByKey.keys()][0];
+  renderProgressOverview();
   renderChart();
   renderWeightTracking();
   renderPRs();
   renderInjuries();
   loadProgressAI();
+}
+
+function renderProgressOverview(){
+  const box = document.getElementById('progressOverview');
+  if(!box) return;
+  const done = state.workouts.filter(w=>w.done);
+  const totalSets = done.reduce((sum,w)=>sum + w.exercises.reduce((s,e)=>s+(e.sets?.length||0),0),0);
+  const snapshots = buildExerciseSnapshots();
+  const tracked = snapshots.filter(item => item.sessions > 0).length;
+  const best = snapshots
+    .filter(item => item.bestKg > 0)
+    .sort((a,b)=>b.bestKg-a.bestKg)[0];
+  const weightEntries = getSortedWeightEntries();
+  const lastWeight = weightEntries.at(-1);
+  const firstWeight = weightEntries[0];
+  const weightDelta = lastWeight && firstWeight
+    ? Math.round((lastWeight.value - firstWeight.value) * 10) / 10
+    : null;
+
+  box.innerHTML = `
+    <div class="progress-kpi">
+      <span>Treningi</span>
+      <strong>${done.length}</strong>
+    </div>
+    <div class="progress-kpi">
+      <span>Serie</span>
+      <strong>${totalSets}</strong>
+    </div>
+    <div class="progress-kpi">
+      <span>Ćwiczenia</span>
+      <strong>${tracked}</strong>
+    </div>
+    <div class="progress-kpi">
+      <span>Waga</span>
+      <strong>${lastWeight ? `${lastWeight.value.toFixed(1)}` : '—'}</strong>
+      <small>${weightDelta === null ? 'brak trendu' : `${weightDelta>0?'+':''}${weightDelta.toFixed(1)} kg`}</small>
+    </div>
+    ${best ? `<div class="progress-highlight"><span>Najmocniejszy rekord</span><strong>${esc(best.name)}</strong><em>${best.bestKg} kg</em></div>` : ''}
+  `;
 }
 
 function renderChart(){
@@ -1135,24 +1180,28 @@ function renderChart(){
       data.push({date:new Date(w.startTime),kg:max});
     }
   });
+  data.sort((a,b)=>a.date-b.date);
   if(!data.length){
-    document.getElementById('chartBars').innerHTML='<div style="color:var(--muted);font-size:13px;">Brak danych — zaloguj trening z tym ćwiczeniem.</div>';
+    document.getElementById('chartBars').innerHTML='<div class="progress-empty">Brak danych dla tego ćwiczenia.</div>';
     document.getElementById('chartLabels').innerHTML='';
     document.getElementById('chartMeta').innerHTML='';
     return;
   }
   const maxKg=Math.max(...data.map(d=>d.kg));
   const minKg=Math.min(...data.map(d=>d.kg));
+  const firstKg=data[0].kg;
+  const lastKg=data[data.length-1].kg;
   document.getElementById('chartBars').innerHTML=data.map((d,i)=>`
-    <div class="bar${i===data.length-1?' hi':''}" style="height:${Math.round((d.kg/maxKg)*100)}%;" title="${d.kg}kg"></div>
+    <div class="bar${i===data.length-1?' hi':''}" style="height:${Math.max(12, Math.round((d.kg/Math.max(maxKg,1))*100))}%;" title="${d.kg}kg"></div>
   `).join('');
   document.getElementById('chartLabels').innerHTML=data.map((d,i)=>`
     <span>${i===0||i===data.length-1?d.date.toLocaleDateString('pl',{day:'numeric',month:'short'}):''}</span>
   `).join('');
-  const diff=maxKg-minKg;
+  const diff=lastKg-firstKg;
   document.getElementById('chartMeta').innerHTML=`
-    <span>Start: ${minKg}kg</span>
-    <span style="color:${diff>0?'var(--green)':'var(--muted)'}">+${diff}kg łącznie</span>
+    <span>Start: ${firstKg} kg</span>
+    <span>Ostatnio: ${lastKg} kg</span>
+    <span class="${diff>0?'good':diff<0?'bad':''}">${diff>0?'+':''}${diff} kg</span>
   `;
 }
 
@@ -1167,9 +1216,9 @@ function renderPRs(){
   const list=document.getElementById('prList');
   if(!Object.keys(prs).length){list.innerHTML='<div style="font-size:13px;color:var(--muted);">Brak danych — zaloguj trening.</div>';return;}
   list.innerHTML=Object.entries(prs).sort((a,b)=>b[1]-a[1]).map(([key,kg])=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-size:14px;">🏆 ${esc(labels[key] || key)}</span>
-      <span style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;">${kg}<span style="font-size:13px;color:var(--muted);">kg</span></span>
+    <div class="pr-item">
+      <span>${esc(labels[key] || key)}</span>
+      <strong>${kg}<small>kg</small></strong>
     </div>
   `).join('');
 }
@@ -1233,10 +1282,10 @@ function renderWeightTracking(selectedDate){
   const recentList = document.getElementById('weightRecentList');
 
   if(!entries.length){
-    chartBars.innerHTML = '<div style="color:var(--muted);font-size:13px;">Dodaj pierwszy pomiar wagi, żeby zobaczyć trend.</div>';
+    chartBars.innerHTML = '<div class="progress-empty">Dodaj pierwszy pomiar wagi, żeby zobaczyć trend.</div>';
     chartLabels.innerHTML = '';
     chartMeta.innerHTML = '<span>Brak danych</span><span>Cel: regularność</span>';
-    trendSummary.innerHTML = '<div style="font-family:\'Syne\',sans-serif;font-size:24px;font-weight:800;">—</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">kg</div>';
+    trendSummary.innerHTML = '<strong>—</strong><span>kg</span>';
     recentList.innerHTML = '';
     return;
   }
@@ -1251,32 +1300,30 @@ function renderWeightTracking(selectedDate){
   const weekEntries = latestEntries.slice(-7);
   const weekAvg = weekEntries.reduce((sum, entry) => sum + entry.value, 0) / weekEntries.length;
 
-  trendSummary.innerHTML = `
-    <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;">${lastValue.toFixed(1)}</div>
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;">aktualnie kg</div>`;
+  trendSummary.innerHTML = `<strong>${lastValue.toFixed(1)}</strong><span>aktualnie kg</span>`;
 
   chartBars.innerHTML = latestEntries.map((entry, idx)=>{
     const height = 30 + Math.round(((entry.value - minValue) / span) * 70);
     const isLatest = idx === latestEntries.length - 1;
-    return `<div class="bar${isLatest?' hi':''}" style="height:${height}%;background:${isLatest?'linear-gradient(180deg,var(--orange),#f0a46d)':'linear-gradient(180deg,#78b9d4,#467487)'};" title="${entry.value.toFixed(1)} kg"></div>`;
+    return `<div class="bar${isLatest?' hi':''}" style="height:${height}%;" title="${entry.value.toFixed(1)} kg"></div>`;
   }).join('');
   chartLabels.innerHTML = latestEntries.map((entry, idx)=>`
     <span>${idx===0 || idx===latestEntries.length-1 || idx===Math.floor(latestEntries.length/2) ? new Date(entry.date).toLocaleDateString('pl',{day:'numeric',month:'short'}) : ''}</span>
   `).join('');
   chartMeta.innerHTML = `
     <span>Śr. 7 dni: ${weekAvg.toFixed(1)} kg</span>
-    <span style="color:${diff>0?'var(--orange)':diff<0?'var(--green)':'var(--muted)'}">${diff>0?'+':''}${diff.toFixed(1)} kg</span>
+    <span class="${diff<0?'good':diff>0?'warn':''}">${diff>0?'+':''}${diff.toFixed(1)} kg</span>
   `;
 
   recentList.innerHTML = `
-    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:2px;">Ostatnie wpisy</div>
+    <div class="weight-list-title">Ostatnie wpisy</div>
     ${entries.slice(-6).reverse().map(entry=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div class="weight-row">
         <div>
-          <div style="font-size:14px;font-weight:700;">${entry.value.toFixed(1)} kg</div>
-          <div style="font-size:12px;color:var(--muted);">${new Date(entry.date).toLocaleDateString('pl',{day:'numeric',month:'long'})}</div>
+          <strong>${entry.value.toFixed(1)} kg</strong>
+          <span>${new Date(entry.date).toLocaleDateString('pl',{day:'numeric',month:'long'})}</span>
         </div>
-        <div style="display:flex;gap:8px;">
+        <div class="weight-actions">
           <button class="btn btn-ghost" onclick="renderWeightTracking('${entry.date}')" style="width:auto;padding:8px 12px;font-size:12px;">Edytuj</button>
           <button class="btn btn-ghost" onclick="deleteWeightEntry('${entry.date}')" style="width:auto;padding:8px 12px;font-size:12px;color:#ff8b8b;border-color:rgba(255,122,122,.2);">Usuń</button>
         </div>

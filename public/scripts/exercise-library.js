@@ -108,10 +108,10 @@
   }
 
   function getExerciseKey(value){
-    if(value && typeof value === 'object' && value.exerciseKey) return value.exerciseKey;
-    const rawName = typeof value === 'string' ? value : value?.canonicalName || value?.name || '';
+    const rawName = typeof value === 'string' ? value : value?.name || value?.displayName || value?.canonicalName || '';
     const found = resolveExerciseMeta(rawName);
     if(found) return found.id;
+    if(value && typeof value === 'object' && value.exerciseKey) return value.exerciseKey;
     const fallback = normalize(rawName);
     return fallback ? `custom:${fallback}` : 'custom:unknown';
   }
