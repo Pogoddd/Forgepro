@@ -250,68 +250,6 @@
     <div class="ttab" onclick="setMode(this,'nutrition')">🥗 Dieta</div>
     <div class="ttab" onclick="setMode(this,'plan')">📅 Plan</div>
   </div>
-  <div class="card" style="margin:10px 14px 0;padding:14px;">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;">
-      <div>
-        <div class="card-label" style="margin-bottom:4px;">Profil dla Coacha</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.5;">Powiedz coachowi kim jesteś, jaki masz cel i jak ma do Ciebie mówić. To da dużo lepsze odpowiedzi niż samo zgadywanie po treningach.</div>
-      </div>
-      <button class="btn btn-ghost" onclick="toggleCoachProfile()" style="width:auto;padding:9px 12px;font-size:12px;flex-shrink:0;">Edytuj</button>
-    </div>
-    <div id="coachProfileSummary" style="font-size:12px;color:var(--text);line-height:1.6;"></div>
-    <div id="coachProfileForm" style="display:none;margin-top:12px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div>
-          <label class="inp-label">Poziom</label>
-          <select class="inp" id="coachLevelInput">
-            <option value="">Wybierz</option>
-            <option value="początkujący">Początkujący</option>
-            <option value="średniozaawansowany">Średniozaawansowany</option>
-            <option value="zaawansowany">Zaawansowany</option>
-          </select>
-        </div>
-        <div>
-          <label class="inp-label">Cel</label>
-          <select class="inp" id="coachGoalInput">
-            <option value="">Wybierz</option>
-            <option value="masa">Masa</option>
-            <option value="redukcja">Redukcja</option>
-            <option value="siła">Siła</option>
-            <option value="rekompozycja">Rekompozycja</option>
-            <option value="ogólny progres">Ogólny progres</option>
-          </select>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div>
-          <label class="inp-label">Dni treningowe</label>
-          <input class="inp" id="coachDaysInput" placeholder="np. 4 dni / tydzień">
-        </div>
-        <div>
-          <label class="inp-label">Staż</label>
-          <input class="inp" id="coachExperienceInput" placeholder="np. 2 lata siłowni">
-        </div>
-      </div>
-      <div style="margin-bottom:8px;">
-        <label class="inp-label">Ograniczenia / ważny kontekst</label>
-        <textarea class="inp" id="coachLimitationsInput" rows="3" style="resize:vertical;padding-top:10px;" placeholder="np. bark czasem boli przy OHP, chcę unikać martwego, pracuję siedząco"></textarea>
-      </div>
-      <div style="margin-bottom:10px;">
-        <label class="inp-label">Jak coach ma odpowiadać</label>
-        <select class="inp" id="coachStyleInput">
-          <option value="">Wybierz</option>
-          <option value="luźno i konkretnie">Luźno i konkretnie</option>
-          <option value="bardziej technicznie">Bardziej technicznie</option>
-          <option value="krótko i surowo">Krótko i surowo</option>
-          <option value="wspierająco">Wspierająco</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-ghost" onclick="toggleCoachProfile(false)" style="flex:1;">Anuluj</button>
-        <button class="btn btn-primary" onclick="saveCoachProfile()" style="flex:1;">Zapisz profil</button>
-      </div>
-    </div>
-  </div>
   <div id="modeHint" style="padding:8px 14px;font-size:12px;color:var(--muted);line-height:1.5;"></div>
 
   <div class="chat-wrap" id="chatWrap"></div>
@@ -351,6 +289,67 @@
   </div>
 
   <div class="progress-overview" id="progressOverview"></div>
+
+  <div class="card coach-profile-card">
+    <div class="progress-card-head">
+      <div>
+        <div class="card-label" style="margin-bottom:4px;">Informacje dla Coacha</div>
+        <div class="progress-card-sub">Tu ustawiasz kontekst, który Pro Coach ma brać pod uwagę przy analizie i odpowiedziach.</div>
+      </div>
+      <button class="btn btn-ghost compact-btn" onclick="toggleCoachProfile()">Edytuj</button>
+    </div>
+    <div id="coachProfileSummary" class="coach-profile-summary"></div>
+    <div id="coachProfileForm" class="coach-profile-form" style="display:none;">
+      <div class="profile-form-grid">
+        <div>
+          <label class="inp-label">Poziom</label>
+          <select class="inp" id="coachLevelInput">
+            <option value="">Wybierz</option>
+            <option value="początkujący">Początkujący</option>
+            <option value="średniozaawansowany">Średniozaawansowany</option>
+            <option value="zaawansowany">Zaawansowany</option>
+          </select>
+        </div>
+        <div>
+          <label class="inp-label">Cel</label>
+          <select class="inp" id="coachGoalInput">
+            <option value="">Wybierz</option>
+            <option value="masa">Masa</option>
+            <option value="redukcja">Redukcja</option>
+            <option value="siła">Siła</option>
+            <option value="rekompozycja">Rekompozycja</option>
+            <option value="ogólny progres">Ogólny progres</option>
+          </select>
+        </div>
+        <div>
+          <label class="inp-label">Dni treningowe</label>
+          <input class="inp" id="coachDaysInput" placeholder="np. 4 dni / tydzień">
+        </div>
+        <div>
+          <label class="inp-label">Staż</label>
+          <input class="inp" id="coachExperienceInput" placeholder="np. 2 lata siłowni">
+        </div>
+      </div>
+      <div class="profile-field">
+        <label class="inp-label">Ograniczenia / ważny kontekst</label>
+        <textarea class="inp" id="coachLimitationsInput" rows="3" placeholder="np. bark czasem boli przy OHP, chcę unikać martwego, pracuję siedząco"></textarea>
+      </div>
+      <div class="profile-field">
+        <label class="inp-label">Jak coach ma odpowiadać</label>
+        <select class="inp" id="coachStyleInput">
+          <option value="">Wybierz</option>
+          <option value="luźno i konkretnie">Luźno i konkretnie</option>
+          <option value="bardziej technicznie">Bardziej technicznie</option>
+          <option value="krótko i surowo">Krótko i surowo</option>
+          <option value="wspierająco">Wspierająco</option>
+        </select>
+      </div>
+      <div class="profile-actions">
+        <button class="btn btn-ghost" onclick="toggleCoachProfile(false)">Anuluj</button>
+        <button class="btn btn-primary" onclick="saveCoachProfile()">Zapisz profil</button>
+      </div>
+    </div>
+  </div>
 
   <div class="card">
     <div class="progress-card-head">
@@ -1124,6 +1123,7 @@ function renderProgress(){
   sel.innerHTML=[...labelsByKey.entries()].map(([key,label])=>`<option value="${esc(key)}"${key===prev?' selected':''}>${esc(label)}</option>`).join('');
   if(!sel.value&&labelsByKey.size>0) sel.value=[...labelsByKey.keys()][0];
   renderProgressOverview();
+  renderCoachProfileSummary();
   renderChart();
   renderWeightTracking();
   renderPRs();
@@ -1556,15 +1556,15 @@ function renderCoachProfileSummary(){
   const summary = document.getElementById('coachProfileSummary');
   if(!summary) return;
   const parts = [
-    profile.level ? `Poziom: <strong>${esc(profile.level)}</strong>` : '',
-    profile.goal ? `Cel: <strong>${esc(profile.goal)}</strong>` : '',
-    profile.trainingDays ? `Dni: <strong>${esc(profile.trainingDays)}</strong>` : '',
-    profile.trainingExperience ? `Staż: <strong>${esc(profile.trainingExperience)}</strong>` : '',
-    profile.coachStyle ? `Styl: <strong>${esc(profile.coachStyle)}</strong>` : ''
+    profile.level ? ['Poziom', profile.level] : null,
+    profile.goal ? ['Cel', profile.goal] : null,
+    profile.trainingDays ? ['Dni', profile.trainingDays] : null,
+    profile.trainingExperience ? ['Staż', profile.trainingExperience] : null,
+    profile.coachStyle ? ['Styl', profile.coachStyle] : null
   ].filter(Boolean);
   summary.innerHTML = parts.length
-    ? parts.join(' · ') + (profile.limitations ? `<div style="margin-top:6px;color:var(--muted);">Kontekst: ${esc(profile.limitations)}</div>` : '')
-    : `<span style="color:var(--muted);">Profil nieuzupełniony. Coach będzie zgadywał z danych treningowych, więc warto go uzupełnić.</span>`;
+    ? parts.map(([label,value]) => `<div><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('') + (profile.limitations ? `<p>Kontekst: ${esc(profile.limitations)}</p>` : '')
+    : `<p>Profil nieuzupełniony. Coach będzie zgadywał z danych treningowych, więc warto go uzupełnić.</p>`;
 }
 
 function toggleCoachProfile(forceOpen){
@@ -1660,7 +1660,7 @@ async function sendChat(){
 }
 
 // ===================== AI — przez backend =====================
-async function callAIWithHistory(systemPrompt, messages){
+async function callAIWithHistory(systemPrompt, messages, options={}){
   const r = await fetch('/api/ai', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -1669,8 +1669,8 @@ async function callAIWithHistory(systemPrompt, messages){
         {role: 'system', content: systemPrompt},
         ...messages
       ],
-      max_tokens: 300,
-      temperature: 0.5
+      max_tokens: options.max_tokens || 300,
+      temperature: options.temperature ?? 0.5
     })
   });
   if(!r.ok) throw new Error('Błąd serwera: ' + r.status);
@@ -1679,17 +1679,19 @@ async function callAIWithHistory(systemPrompt, messages){
   return d.choices?.[0]?.message?.content || '';
 }
 
-async function callAI(userMsg, systemPrompt){
-  return callAIWithHistory(buildSystemContext(systemPrompt), [{role:'user', content:userMsg}]);
+async function callAI(userMsg, systemPrompt, options={}){
+  return callAIWithHistory(buildSystemContext(systemPrompt), [{role:'user', content:userMsg}], options);
 }
 
 // ===================== EXCEL IMPORT =====================
 let importStep = 1;
 let parsedPlan = null; // [{dayName, exercises:[{name,sets,reps,notes}]}]
+let importDiagnostics = null;
 
 function openImportPanel(){
   importStep = 1;
   parsedPlan = null;
+  importDiagnostics = null;
   updateImportStep(1);
   showImportUpload();
   openPanel('importPanel');
@@ -1794,6 +1796,143 @@ function handleImageSelect(e){
   e.target.value = '';
 }
 
+function normalizeImportText(value){
+  return cleanText(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function countPlanExercises(plan){
+  return (plan?.days || []).reduce((sum, day) => sum + ((day.exercises || []).length), 0);
+}
+
+function flattenPlanExerciseNames(plan){
+  return (plan?.days || [])
+    .flatMap(day => day.exercises || [])
+    .map(ex => normalizeImportText(ex.name))
+    .filter(Boolean);
+}
+
+function extractJsonObject(text){
+  const clean = String(text || '').replace(/```json|```/g, '').trim();
+  const start = clean.indexOf('{');
+  if(start < 0) return '';
+  let depth = 0;
+  for(let i = start; i < clean.length; i++){
+    if(clean[i] === '{') depth++;
+    if(clean[i] === '}') depth--;
+    if(depth === 0) return clean.slice(start, i + 1);
+  }
+  return '';
+}
+
+function looksLikeExerciseLine(line){
+  const raw = cleanText(line);
+  const up = raw.toUpperCase();
+  if(raw.length < 5 || raw.length > 140) return false;
+  if(['NAZWA', 'ĆWICZENIE', 'CWICZENIE', 'TEMPO', 'PRZERWA', 'METODA', 'ROZGRZEWKA', 'PORADNIK'].some(word => up.includes(word))) return false;
+
+  // Te heurystyki nie zapisują planu, tylko pomagają wykryć, czy AI mogło coś pominąć.
+  const startsWithLp = /^\d+[A-Z]?\s+/.test(raw);
+  const hasSetRepPattern =
+    /\b\d+\s*(?:x|X|s|S)\s*\d+/.test(raw) ||
+    /\b[2-6]\s+\d+[-–]\d+\b/.test(raw) ||
+    /\b[2-6]\s*[,;]\s*\d+[-–]?\d*\b/.test(raw);
+  const hasTrainingWords = /(wycisk|ściągan|sciag|wiosł|wiosl|przysiad|martwy|uginan|prostowan|unoszen|rozpi|press|row|curl|extension|pulldown|squat|deadlift|raise|fly)/i.test(raw);
+  return (startsWithLp && (hasSetRepPattern || hasTrainingWords)) || (hasTrainingWords && hasSetRepPattern);
+}
+
+function getLikelyExerciseLines(lines){
+  const unique = new Map();
+  (lines || []).forEach((line, idx) => {
+    const clean = cleanText(line);
+    if(!looksLikeExerciseLine(clean)) return;
+    const key = normalizeImportText(clean);
+    if(!unique.has(key)) unique.set(key, {idx: idx + 1, text: clean});
+  });
+  return [...unique.values()].slice(0, 80);
+}
+
+function buildImportDiagnostics(lines, plan, sourceType){
+  const candidates = getLikelyExerciseLines(lines);
+  const exerciseNames = flattenPlanExerciseNames(plan);
+  const possibleMissing = candidates.filter(item => {
+    const lineKey = normalizeImportText(item.text);
+    return !exerciseNames.some(name => name && (lineKey.includes(name) || name.includes(lineKey.slice(0, Math.min(lineKey.length, 28)))));
+  }).slice(0, 12);
+
+  const parsedExercises = countPlanExercises(plan);
+  const candidateCount = candidates.length;
+  const coverage = candidateCount ? Math.round((parsedExercises / candidateCount) * 100) : 100;
+  return {
+    sourceType,
+    candidateCount,
+    parsedExercises,
+    coverage: Math.min(100, coverage),
+    possibleMissing,
+    needsReview: possibleMissing.length >= 2 || (candidateCount >= 4 && parsedExercises < Math.ceil(candidateCount * 0.7))
+  };
+}
+
+async function parsePlanWithAI(fullText, lines, sourceType, previousPlan=null){
+  const candidates = getLikelyExerciseLines(lines);
+  const numberedLines = (lines || [])
+    .slice(0, 180)
+    .map((line, idx) => `${idx + 1}. ${line}`)
+    .join('\n');
+  const candidateBlock = candidates.length
+    ? candidates.map(item => `${item.idx}. ${item.text}`).join('\n')
+    : 'Brak pewnych kandydatów - analizuj cały tekst.';
+
+  // Dajemy AI zarówno cały tekst, jak i listę podejrzanych linii, żeby trudniej było pominąć ćwiczenia.
+  const userMsg = `ŹRÓDŁO: ${sourceType}
+
+LINIE, KTÓRE WYGLĄDAJĄ JAK ĆWICZENIA:
+${candidateBlock}
+
+${previousPlan ? `AKTUALNY PLAN DO POPRAWY:
+${JSON.stringify(previousPlan).slice(0, 6000)}
+` : ''}
+PEŁNY TEKST:
+${numberedLines || fullText.slice(0, 9000)}
+
+Zwróć jeden kompletny JSON planu. Jeśli linia wygląda jak ćwiczenie, musi trafić do któregoś dnia albo do notatki ćwiczenia.`;
+
+  const aiResult = await Promise.race([
+    callAI(userMsg, AI_PARSE_PROMPT, {max_tokens: 1800, temperature: 0.15}),
+    new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 40000))
+  ]);
+  const jsonText = extractJsonObject(aiResult);
+  return jsonText ? JSON.parse(jsonText) : null;
+}
+
+async function finalizeImportedTextPlan({lines, fullText, sourceType, directPlan}){
+  let plan = directPlan;
+  let diagnostics = buildImportDiagnostics(lines, plan, sourceType);
+
+  if(!plan || !plan.days || !plan.days.length || diagnostics.needsReview){
+    try{
+      const aiPlan = await parsePlanWithAI(fullText, lines, sourceType, plan);
+      const aiDiagnostics = buildImportDiagnostics(lines, aiPlan, sourceType);
+
+      // Wybieramy wersję, która ma więcej ćwiczeń i lepsze pokrycie źródła.
+      if(aiPlan && countPlanExercises(aiPlan) >= countPlanExercises(plan)){
+        plan = aiPlan;
+        diagnostics = aiDiagnostics;
+      }
+    }catch(err){
+      if(!plan || !plan.days || !plan.days.length) throw err;
+    }
+  }
+
+  importDiagnostics = diagnostics;
+  return plan;
+}
+
 // ===== PDF PROCESSING =====
 async function processPdfFile(file){
   updateImportStep(2);
@@ -1854,29 +1993,19 @@ async function processPdfFile(file){
 
     let plan = directParsePdfText(allLines, fullText);
 
-    // ---- AI FALLBACK ----
-    if(!plan || !plan.days || !plan.days.length){
-      document.getElementById('importContent').innerHTML = `
-        <div class="ai-parsing">
-          <div class="ai-spinner"></div>
-          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">AI analizuje plan…</div>
-          <div style="font-size:13px;color:var(--muted);">Niestandardowy format — AI go odczyta</div>
-        </div>
-      `;
+    document.getElementById('importContent').innerHTML = `
+      <div class="ai-parsing">
+        <div class="ai-spinner"></div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Sprawdzam kompletność…</div>
+        <div style="font-size:13px;color:var(--muted);">Porównuję znalezione ćwiczenia z tekstem źródłowym</div>
+      </div>
+    `;
 
-      try {
-        const truncated = fullText.slice(0, 7000);
-        const aiResult = await Promise.race([
-          callAI(truncated, AI_PARSE_PROMPT),
-          new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 30000))
-        ]);
-        const clean = aiResult.replace(/```json|```/g,'').trim();
-        const jsonMatch = clean.match(/\{[\s\S]*\}/);
-        if(jsonMatch) plan = JSON.parse(jsonMatch[0]);
-      } catch(err) {
-        showImportError('Nie udało się przetworzyć pliku.<br><br><small style="color:var(--dim);">Sprawdź czy klucz AI jest ustawiony w Railway → Variables → GROQ_API_KEY</small>');
-        return;
-      }
+    try {
+      plan = await finalizeImportedTextPlan({lines: allLines, fullText, sourceType: 'PDF', directPlan: plan});
+    } catch(err) {
+      showImportError('Nie udało się przetworzyć pliku.<br><br><small style="color:var(--dim);">Sprawdź czy klucz AI jest ustawiony w Vercel → Environment Variables → GROQ_API_KEY</small>');
+      return;
     }
 
     if(!plan || !plan.days || !plan.days.length){
@@ -1931,20 +2060,11 @@ async function processImageFile(file){
 
     let plan = directParsePdfText(lines, fullText);
 
-    if(!plan || !plan.days || !plan.days.length){
-      try{
-        const truncated = fullText.slice(0, 6000);
-        const aiResult = await Promise.race([
-          callAI(truncated, AI_PARSE_PROMPT),
-          new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 30000))
-        ]);
-        const clean = aiResult.replace(/```json|```/g,'').trim();
-        const jsonMatch = clean.match(/\{[\s\S]*\}/);
-        if(jsonMatch) plan = JSON.parse(jsonMatch[0]);
-      }catch(err){
-        showImportError('Nie udało się przetworzyć zdjęcia planu.<br><br><small style="color:var(--dim);">Spróbuj prostego kadru bez cienia albo ustaw klucz AI w Railway.</small>');
-        return;
-      }
+    try{
+      plan = await finalizeImportedTextPlan({lines, fullText, sourceType: 'Zdjęcie/OCR', directPlan: plan});
+    }catch(err){
+      showImportError('Nie udało się przetworzyć zdjęcia planu.<br><br><small style="color:var(--dim);">Spróbuj prostego kadru bez cienia albo sprawdź klucz AI w Vercel.</small>');
+      return;
     }
 
     if(!plan || !plan.days || !plan.days.length){
@@ -2197,28 +2317,21 @@ function processExcelFile(file){
       // ---- DIRECT PARSER ----
       let plan = directParsePlan(wb);
 
-      // ---- AI FALLBACK (with timeout) ----
-      if(!plan || !plan.days || plan.days.length === 0){
-        document.getElementById('importContent').innerHTML = `
-          <div class="ai-parsing">
-            <div class="ai-spinner"></div>
-            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">AI analizuje plan…</div>
-            <div style="font-size:13px;color:var(--muted);">Niestandardowy format — Claude go odczyta</div>
-          </div>
-        `;
-        try {
-          const aiResult = await Promise.race([
-            callAI(truncated.slice(0,3000), AI_PARSE_PROMPT),
-            new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 25000))
-          ]);
-          const clean = aiResult.replace(/```json|```/g,'').trim();
-          const jsonMatch = clean.match(/\{[\s\S]*\}/);
-          if(jsonMatch) plan = JSON.parse(jsonMatch[0]);
-        } catch(aiErr) {
-          showImportError(`Nie udało się odczytać planu.<br><br>
-            <small style="color:var(--dim);">Upewnij się że plik zawiera plan treningowy z kolumnami: ćwiczenie, serie, powtórzenia.</small>`);
-          return;
-        }
+      document.getElementById('importContent').innerHTML = `
+        <div class="ai-parsing">
+          <div class="ai-spinner"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;">Sprawdzam kompletność…</div>
+          <div style="font-size:13px;color:var(--muted);">AI porównuje wynik z liniami z arkusza</div>
+        </div>
+      `;
+
+      try {
+        const excelLines = allText.split(/\r?\n/).map(line => cleanText(line)).filter(Boolean);
+        plan = await finalizeImportedTextPlan({lines: excelLines, fullText: truncated, sourceType: 'Excel/CSV', directPlan: plan});
+      } catch(aiErr) {
+        showImportError(`Nie udało się odczytać planu.<br><br>
+          <small style="color:var(--dim);">Upewnij się że plik zawiera plan treningowy z kolumnami: ćwiczenie, serie, powtórzenia.</small>`);
+        return;
       }
 
       if(!plan || !plan.days || plan.days.length === 0){
@@ -2246,13 +2359,43 @@ function sanitizeParsedPlan(plan){
       reps: cleanText(ex?.reps, '8-12'),
       rest: cleanText(ex?.rest, ''),
       tempo: cleanText(ex?.tempo, ''),
-      notes: cleanText(ex?.notes, '')
+      notes: cleanText(ex?.notes, ''),
+      setPlan: Array.isArray(ex?.setPlan) ? ex.setPlan.map((set, idx) => ({
+        idx,
+        type: cleanText(set?.type, 'normal').toLowerCase() === 'backoff' ? 'backoff' : 'normal',
+        reps: cleanText(set?.reps || ex?.reps, '8-12')
+      })) : undefined
     })) : []
   })) : [];
   return {
     planName: cleanText(plan.planName, 'Plan treningowy'),
     days: safeDays
   };
+}
+
+function renderImportDiagnostics(){
+  if(!importDiagnostics) return '';
+  const d = importDiagnostics;
+  const statusClass = d.needsReview ? 'warn' : 'good';
+  const statusText = d.needsReview ? 'Sprawdź plan przed importem' : 'Import wygląda kompletnie';
+  const missingHtml = d.possibleMissing?.length
+    ? `<div class="import-missing-list">
+        ${d.possibleMissing.slice(0,5).map(item => `<div><span>${item.idx}</span>${esc(item.text)}</div>`).join('')}
+      </div>`
+    : '';
+
+  // Ten panel nie blokuje importu. Ma pomóc szybko wyłapać, czy AI coś podejrzanie pominęło.
+  return `
+    <div class="import-quality ${statusClass}">
+      <div class="import-quality-head">
+        <div>
+          <strong>${statusText}</strong>
+          <span>${d.parsedExercises} ćwiczeń w planie · ${d.candidateCount} potencjalnych linii ćwiczeń · ${d.coverage}% pokrycia</span>
+        </div>
+      </div>
+      ${missingHtml ? `<div class="import-quality-note">Możliwe pominięte linie z pliku:</div>${missingHtml}` : ''}
+    </div>
+  `;
 }
 
 function syncImportPlanField(path, value){
@@ -2351,6 +2494,8 @@ function showImportPreview(plan){
         </div>
         <div class="plan-helper">Popraw nazwę dnia, ćwiczenia, serie, powtórzenia i notatkę, jeśli AI coś źle odczytało.</div>
       </div>
+
+      ${renderImportDiagnostics()}
 
       <div class="plan-preview-grid">
         ${parsedPlan.days.map((day, dayIdx)=>`
@@ -2585,14 +2730,18 @@ function startFromImportedPlan(planId, encodedDayName){
 // ===================== DIRECT EXCEL PARSER =====================
 const AI_PARSE_PROMPT = `Jesteś parserem planów treningowych. Otrzymujesz tekst z pliku (Excel CSV lub PDF) od polskiego trenera personalnego.
 Odpowiedz TYLKO czystym JSON bez markdown, backticks ani żadnego dodatkowego tekstu:
-{"planName":"nazwa planu","days":[{"dayName":"nazwa dnia","exercises":[{"name":"ćwiczenie","sets":3,"reps":"8-10","rest":"120s","notes":""}]}]}
+{"planName":"nazwa planu","days":[{"dayName":"nazwa dnia","exercises":[{"name":"ćwiczenie","sets":3,"reps":"8-10","rest":"120s","tempo":"","notes":""}]}]}
 Zasady:
 - Szukaj dni treningowych: PUSH/PULL/FBW/ARMS/LEGS/PONIEDZIAŁEK/WTOREK/ŚRODA/CZWARTEK/PIĄTEK/SOBOTA/NIEDZIELA/DZIEŃ A/B/C/D
 - Ignoruj opisy, poradniki, wstępy, informacje o diecie, regeneracji
+- NIE streszczaj planu. Każde ćwiczenie z tekstu ma być osobnym obiektem w JSON.
+- Jeśli w źródle jest numeracja 1,2,3,4 albo 4A/4B, zachowaj wszystkie pozycje jako ćwiczenia.
+- Jeśli nie jesteś pewien dnia, dodaj ćwiczenie do najbliższego poprzedniego dnia treningowego.
 - sets = liczba całkowita (np. 3, 4). Format "2S6-8P" = 2 serie + 1 back off = sets:3
 - reps = zakres lub liczba (np. "8-10", "12", "10 na rękę")
 - Daty w formacie d-m to zakresy powtórzeń (np. "8-6" = "6-8 powt.")
 - Ćwiczenia z A/B przy numerze (5A, 5B) to superserie — dodaj notes: "Superseria"
+- Jeśli widzisz "back off", "backoff", "1 x back off" albo podobne — dolicz tę serię do sets i dodaj notes: "Back off"
 - Jeśli brak podziału na dni — stwórz jeden dzień "Trening A"
 - KRYTYCZNE: Przepisuj nazwy ćwiczeń DOKŁADNIE jak w oryginale, bez żadnych zmian ani tłumaczeń`;
 

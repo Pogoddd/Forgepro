@@ -107,9 +107,12 @@ body{
 
 /* CARDS */
 .card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:22px;padding:18px;margin:12px 16px 0;
-  box-shadow:0 12px 28px rgba(0,0,0,.14);
+  background:linear-gradient(180deg,rgba(18,24,32,.98),rgba(14,20,27,.98));
+  border:1px solid #2b3745;
+  border-radius:18px;
+  padding:18px;
+  margin:12px 16px 0;
+  box-shadow:0 12px 24px rgba(0,0,0,.12);
 }
 .card-label{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#90a0ae;margin-bottom:12px;}
 
@@ -130,8 +133,15 @@ body{
 .btn-primary{background:var(--orange);color:#163243;box-shadow:0 8px 18px rgba(142,194,218,.16);}
 .btn-primary:active{box-shadow:none;}
 .btn-secondary{background:transparent;color:var(--orange);border:1px solid var(--orange-mid);}
-.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-ghost{background:#141c25;color:var(--text);border:1px solid #2f3b49;}
 .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,.2);}
+.compact-btn{
+  width:auto;
+  padding:9px 12px;
+  font-size:12px;
+  flex-shrink:0;
+  border-radius:12px;
+}
 
 /* INPUTS */
 .inp{
@@ -569,6 +579,46 @@ select.inp option{background:var(--surface2);}
   text-transform:uppercase;
   letter-spacing:.08em;
 }
+.coach-profile-card{
+  border-color:var(--orange-mid);
+  background:linear-gradient(180deg,rgba(142,194,218,.08),rgba(14,20,27,.98));
+}
+.coach-profile-summary{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  font-size:12px;
+  color:var(--text);
+  line-height:1.5;
+}
+.coach-profile-summary > div{
+  background:#111923;
+  border:1px solid #2d3946;
+  border-radius:12px;
+  padding:9px 11px;
+}
+.coach-profile-form{
+  margin-top:12px;
+}
+.profile-form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:8px;
+}
+.profile-form-grid > *{min-width:0;}
+.profile-field{
+  margin-bottom:8px;
+}
+.profile-field textarea{
+  resize:vertical;
+  padding-top:10px;
+}
+.profile-actions{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
 .weight-form{
   display:grid;
   grid-template-columns:1fr;
@@ -793,6 +843,66 @@ select.inp option{background:var(--surface2);}
 .import-drop:hover,.import-drop.drag{border-color:var(--orange);background:var(--orange-dim);}
 .import-drop p{font-size:14px;color:var(--muted);line-height:1.6;}
 .import-drop strong{color:var(--text);}
+
+.import-quality{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 13px;
+  margin-bottom:14px;
+  background:#111923;
+}
+.import-quality.good{
+  border-color:rgba(52,211,153,.28);
+  background:rgba(52,211,153,.06);
+}
+.import-quality.warn{
+  border-color:rgba(240,164,109,.34);
+  background:rgba(240,164,109,.08);
+}
+.import-quality-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.import-quality strong{
+  display:block;
+  font-size:13px;
+  margin-bottom:3px;
+}
+.import-quality span{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.45;
+}
+.import-quality-note{
+  margin-top:10px;
+  color:#f0c19c;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.import-missing-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:8px;
+}
+.import-missing-list div{
+  display:grid;
+  grid-template-columns:28px 1fr;
+  gap:8px;
+  align-items:start;
+  color:var(--text);
+  font-size:12px;
+  line-height:1.35;
+}
+.import-missing-list span{
+  color:#f0c19c;
+  font-weight:800;
+}
 
 .plan-day-card{
   background:var(--surface2);border:1px solid var(--border);

@@ -1,7 +1,7 @@
 const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const REQUEST_TIMEOUT_MS = 30000;
 const MAX_MESSAGE_COUNT = 24;
-const MAX_MESSAGE_LENGTH = 4000;
+const MAX_MESSAGE_LENGTH = 12000;
 const FIREBASE_PUBLIC_CONFIG_KEYS = [
   'FIREBASE_API_KEY',
   'FIREBASE_AUTH_DOMAIN',
@@ -73,7 +73,7 @@ function parseChatRequest(body) {
   return {
     model: DEFAULT_MODEL,
     messages,
-    max_tokens: Math.round(clampNumber(body.max_tokens, 128, 1024, 700)),
+    max_tokens: Math.round(clampNumber(body.max_tokens, 128, 2048, 700)),
     temperature: clampNumber(body.temperature, 0, 1, 0.7)
   };
 }
