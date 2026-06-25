@@ -216,12 +216,37 @@ function getExerciseSetPlan(ex){
   }));
 }
 
+const SET_TYPE_META = {
+  normal: {key:'normal', short:'N', label:'Normalna', category:'Bazowe', hint:'Standardowa seria robocza'},
+  warmup: {key:'warmup', short:'R', label:'Rozgrzewka', category:'Bazowe', hint:'Lżejsza seria przygotowująca'},
+  backoff: {key:'backoff', short:'B', label:'Back off', category:'Intensyfikacje', hint:'Lżejsza seria po cięższej pracy'},
+  cluster: {key:'cluster', short:'C', label:'Cluster', category:'Intensyfikacje', hint:'Mini-serie, np. 4/4/4'},
+  drop: {key:'drop', short:'D', label:'Dropset', category:'Intensyfikacje', hint:'Zmniejszasz ciężar i kontynuujesz'},
+  restpause: {key:'restpause', short:'RP', label:'Rest-pause', category:'Intensyfikacje', hint:'Krótka pauza i dogrywka powtórzeń'},
+  myoreps: {key:'myoreps', short:'M', label:'Myo reps', category:'Intensyfikacje', hint:'Seria aktywacyjna plus mini-serie'},
+  failure: {key:'failure', short:'F', label:'Do upadku', category:'Wysiłek', hint:'Seria blisko lub do załamania'},
+  negative: {key:'negative', short:'NEG', label:'Negatywy', category:'Technika', hint:'Akcent na wolne opuszczanie'},
+  partial: {key:'partial', short:'P', label:'Częściowe', category:'Technika', hint:'Skrócony zakres ruchu'},
+  pause: {key:'pause', short:'PAU', label:'Pauza', category:'Technika', hint:'Zatrzymanie w trudnym punkcie'}
+};
+
+const SET_TYPE_ORDER = ['normal','warmup','backoff','cluster','drop','restpause','myoreps','failure','negative','partial','pause'];
+
+function normalizeSetType(type){
+  return window.ExerciseLibrary?.normalizeSetType?.(type) || (SET_TYPE_META[type] ? type : 'normal');
+}
+
 function getSetTypeMeta(type){
-  const normalized = cleanText(type || 'normal').toLowerCase();
-  if(normalized === 'backoff'){
-    return {key:'backoff', short:'B', label:'Back off'};
-  }
-  return {key:'normal', short:'1', label:'Normalna seria'};
+  return SET_TYPE_META[normalizeSetType(type)] || SET_TYPE_META.normal;
+}
+
+function getSetTypeGroups(){
+  return SET_TYPE_ORDER.reduce((groups, key) => {
+    const meta = SET_TYPE_META[key];
+    if(!groups[meta.category]) groups[meta.category] = [];
+    groups[meta.category].push(meta);
+    return groups;
+  }, {});
 }
 
 function buildPlanSummary(ex){

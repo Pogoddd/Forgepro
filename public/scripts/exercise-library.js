@@ -15,6 +15,52 @@
       .trim();
   }
 
+  const SET_TYPE_KEYS = new Set([
+    'normal',
+    'warmup',
+    'backoff',
+    'cluster',
+    'drop',
+    'restpause',
+    'myoreps',
+    'failure',
+    'negative',
+    'partial',
+    'pause'
+  ]);
+
+  function normalizeSetType(value){
+    const raw = normalize(value);
+    if(!raw) return 'normal';
+    if(['warmup','warm up','rozgrzewka','rozgrzewkowa'].includes(raw)) return 'warmup';
+    if(['backoff','back off','back off set','down set'].includes(raw)) return 'backoff';
+    if(['cluster','cluster set','klaster'].includes(raw)) return 'cluster';
+    if(['drop','dropset','drop set','redukcja','redukcje'].includes(raw)) return 'drop';
+    if(['restpause','rest pause','rest pauza'].includes(raw)) return 'restpause';
+    if(['myoreps','myo reps','myo rep'].includes(raw)) return 'myoreps';
+    if(['failure','do upadku','upadek','to failure'].includes(raw)) return 'failure';
+    if(['negative','negatyw','negatywy','negatywna'].includes(raw)) return 'negative';
+    if(['partial','partials','powtorzenia czesciowe','czesciowe'].includes(raw)) return 'partial';
+    if(['pause','pause reps','pauza','pauzowane'].includes(raw)) return 'pause';
+    return SET_TYPE_KEYS.has(raw) ? raw : 'normal';
+  }
+
+  function detectSetTypeFromText(value){
+    const raw = normalize(value);
+    if(!raw) return 'normal';
+    if(raw.includes('back off') || raw.includes('backoff')) return 'backoff';
+    if(raw.includes('cluster') || raw.includes('klaster')) return 'cluster';
+    if(raw.includes('drop set') || raw.includes('dropset') || raw.includes('redukc')) return 'drop';
+    if(raw.includes('rest pause')) return 'restpause';
+    if(raw.includes('myo')) return 'myoreps';
+    if(raw.includes('do upadku') || raw.includes('failure')) return 'failure';
+    if(raw.includes('negatyw') || raw.includes('negative')) return 'negative';
+    if(raw.includes('czesciow') || raw.includes('partial')) return 'partial';
+    if(raw.includes('pauz') || raw.includes('pause')) return 'pause';
+    if(raw.includes('rozgrzew')) return 'warmup';
+    return 'normal';
+  }
+
   const BASE_CATALOG = [
     {id:'bp', name:'Wyciskanie sztangi', cat:'Klatka', muscle:'Klatka piersiowa', aliases:['bench press','wyciskanie sztangi na lawce', 'wyciskanie sztangi na lawce poziomej','wyciskanie lezac','flat bench','barbell bench press']},
     {id:'incbp', name:'Wyciskanie skos gorny', cat:'Klatka', muscle:'Gorna klatka', aliases:['incline bench press','wyciskanie skos dodatni','wyciskanie sztangi skos dodatni','wyciskanie hantli skos dodatni','incline dumbbell press']},
@@ -131,7 +177,8 @@
     return {
       kg: Number.isFinite(kg) && kg >= 0 ? kg : 0,
       reps: Number.isFinite(reps) && reps > 0 ? reps : 0,
-      type: text(set?.type || 'normal').toLowerCase() === 'backoff' ? 'backoff' : 'normal',
+      type: normalizeSetType(set?.type),
+      repsPattern: text(set?.repsPattern || ''),
       ...(Number.isFinite(rpe) && rpe > 0 ? {rpe} : {}),
       ...(set?.time ? {time: set.time} : {})
     };
@@ -141,7 +188,7 @@
     if(Array.isArray(exercise?.setPlan) && exercise.setPlan.length){
       return exercise.setPlan.map((set, idx) => ({
         idx,
-        type: text(set?.type || 'normal').toLowerCase() === 'backoff' ? 'backoff' : 'normal',
+        type: normalizeSetType(set?.type),
         reps: text(set?.reps || exercise?.plannedReps || '8-12')
       }));
     }
@@ -152,13 +199,13 @@
     const reps = text(exercise?.plannedReps || exercise?.reps || '8-12');
     const notes = text(exercise?.notes || '').toLowerCase();
     const repsText = reps.toLowerCase();
-    const hasBackoff = notes.includes('back off') || notes.includes('backoff') || repsText.includes('back off') || repsText.includes('backoff');
+    const detectedType = detectSetTypeFromText(`${notes} ${repsText}`);
     const plan = [];
     for(let i = 0; i < Math.max(1, plannedSets); i++){
-      const isBackoff = hasBackoff && i === Math.max(1, plannedSets) - 1;
+      const isLastIntensitySet = detectedType !== 'normal' && detectedType !== 'warmup' && i === Math.max(1, plannedSets) - 1;
       plan.push({
         idx: i,
-        type: isBackoff ? 'backoff' : 'normal',
+        type: isLastIntensitySet ? detectedType : 'normal',
         reps
       });
     }
@@ -251,6 +298,8 @@
     getExerciseKey,
     getExerciseLabel,
     getCatalog: () => catalog,
+    normalizeSetType,
+    detectSetTypeFromText,
     enrichExercise,
     normalizeWorkout,
     normalizeImportedPlan,

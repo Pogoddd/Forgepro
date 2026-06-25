@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://torebkiswiata.pl/sitemap.xml
